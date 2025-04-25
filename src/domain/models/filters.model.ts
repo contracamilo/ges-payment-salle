@@ -8,6 +8,8 @@ export interface StudentFilters {
   codigo?: string;
   /** ID del programa académico */
   programaId?: string;
+  /** Término de búsqueda general (nombre, apellido, código) */
+  search?: string;
 }
 
 /**

@@ -179,8 +179,8 @@ export class StudentsPage extends BaseComponent {
       <div class="students-page">
         <div class="container">
           <div class="row mb-4 align-items-center">
-            <div class="col-md-6">
-              <h1 class="display-5 fw-bold mb-0">
+            <div class="col-md-6 pt-3"> 
+              <h1 class="display-6 fw-bold mb-0">
                 <i class="fas fa-users text-primary me-2"></i>
                 Gestión de Estudiantes
               </h1>

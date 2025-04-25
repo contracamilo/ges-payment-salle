@@ -50,7 +50,7 @@ export enum PaymentStatus {
 /**
  * Modelo para la creación de un nuevo pago
  */
-export type CreatePaymentDto = Omit<Payment, 'id' | 'estudiante'> & { 
+export type CreatePaymentDto = Omit<Payment, 'id'> & { 
   estudianteId: string 
 };
 

@@ -98,10 +98,27 @@ export class PaymentApiRepository implements PaymentRepository {
    * Crea un nuevo pago
    */
   async create(payment: CreatePaymentDto): Promise<Payment> {
-    return fetchApi<Payment>('/pagos', {
-      method: 'POST',
-      body: JSON.stringify(payment)
-    });
+    console.log('PaymentApiRepository - Creando nuevo pago:', payment);
+    
+    // Verificar que el pago incluya la información del estudiante
+    if (!payment.estudiante) {
+      console.error('PaymentApiRepository - Error: El pago no incluye información del estudiante');
+    } else {
+      console.log('PaymentApiRepository - Información de estudiante incluida:', payment.estudiante);
+    }
+    
+    try {
+      const result = await fetchApi<Payment>('/pagos', {
+        method: 'POST',
+        body: JSON.stringify(payment)
+      });
+      
+      console.log('PaymentApiRepository - Pago creado exitosamente:', result);
+      return result;
+    } catch (error) {
+      console.error('PaymentApiRepository - Error al crear pago:', error);
+      throw error;
+    }
   }
 
   /**

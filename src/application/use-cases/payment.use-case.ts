@@ -80,7 +80,25 @@ export class PaymentUseCase {
    * @returns Promise con el pago creado
    */
   async createPayment(payment: CreatePaymentDto): Promise<Payment> {
-    return this.repository.create(payment);
+    console.log('PaymentUseCase - Creando nuevo pago con datos:', payment);
+    
+    // Validar que el DTO incluya la información necesaria
+    if (!payment.estudianteId) {
+      throw new Error('El ID del estudiante es requerido para crear un pago');
+    }
+    
+    if (!payment.estudiante) {
+      console.warn('PaymentUseCase - Advertencia: No se incluye información completa del estudiante');
+    }
+    
+    try {
+      const result = await this.repository.create(payment);
+      console.log('PaymentUseCase - Pago creado exitosamente:', result);
+      return result;
+    } catch (error) {
+      console.error('PaymentUseCase - Error al crear pago:', error);
+      throw error;
+    }
   }
 
   /**

@@ -41,6 +41,9 @@ export class StudentApiRepository implements StudentRepository {
     if (filters.programaId) {
       params.append('programaId', filters.programaId);
     }
+    if (filters.search) {
+      params.append('search', filters.search);
+    }
 
     return fetchApi<Student[]>(`/estudiantes?${params.toString()}`);
   }

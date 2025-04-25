@@ -14,6 +14,7 @@ export class PaymentsPage extends BaseComponent {
   @state() private selectedPayment: Payment | null = null;
   @state() private isDetailModalOpen: boolean = false;
   @state() private notification: { message: string; type: string } | null = null;
+  @state() private isPaymentFormOpen: boolean = false;
 
   /**
    * Task para cargar los pagos
@@ -22,22 +23,26 @@ export class PaymentsPage extends BaseComponent {
     this,
     async () => {
       try {
+        console.log('Iniciando carga de pagos...', this.filters);
         const paymentUseCase = window.services.paymentUseCase;
         let result;
         
         if (Object.keys(this.filters).length > 0) {
+          console.log('Cargando pagos con filtros:', this.filters);
           result = await paymentUseCase.getPaymentsByFilters(this.filters);
         } else {
+          console.log('Cargando todos los pagos');
           result = await paymentUseCase.getAllPayments();
         }
         
+        console.log(`Se encontraron ${result.length} pagos`);
         return result;
       } catch (error) {
         console.error('Error al cargar pagos:', error);
         throw error;
       }
     },
-    () => [this.filters]
+    () => [JSON.stringify(this.filters)] // Convertir a string para detectar cambios
   );
 
   /**
@@ -135,6 +140,45 @@ export class PaymentsPage extends BaseComponent {
     }
   }
 
+  /**
+   * Abre el formulario de creación de pago
+   */
+  openPaymentForm() {
+    this.isPaymentFormOpen = true;
+  }
+
+  /**
+   * Cierra el formulario de creación de pago
+   */
+  closePaymentForm() {
+    this.isPaymentFormOpen = false;
+  }
+
+  /**
+   * Maneja la creación de un nuevo pago
+   */
+  handlePaymentCreated() {
+    // Primero cerramos el formulario
+    this.closePaymentForm();
+    
+    // Forzamos una actualización de los filtros para disparar la recarga
+    this.filters = { ...this.filters };
+    
+    // Mostramos una notificación de éxito
+    this.showNotification(new CustomEvent('notification', {
+      detail: {
+        message: 'Pago creado correctamente',
+        type: 'success'
+      }
+    }));
+    
+    // Esperamos un momento antes de ejecutar la tarea para asegurar
+    // que los cambios de estado se hayan aplicado
+    setTimeout(() => {
+      this.loadPaymentsTask.run();
+    }, 100);
+  }
+
   override connectedCallback() {
     super.connectedCallback();
     
@@ -158,13 +202,16 @@ export class PaymentsPage extends BaseComponent {
         <div class="container">
           <div class="row mb-4 align-items-center">
             <div class="col-md-6">
-              <h1 class="display-5 fw-bold mb-0">
+              <h1 class="display-6 pt-3 fw-bold mb-0">
                 <i class="fas fa-money-bill-wave text-primary me-2"></i>
                 Gestión de Pagos
               </h1>
             </div>
             <div class="col-md-6 text-md-end mt-3 mt-md-0">
-              <!-- Aquí se pueden añadir botones de acción principal -->
+              <!-- Botón para crear nuevo pago -->
+              <button class="btn btn-primary" @click=${this.openPaymentForm}>
+                <i class="fas fa-plus-circle me-1"></i> Nuevo Pago
+              </button>
             </div>
           </div>
           
@@ -202,6 +249,14 @@ export class PaymentsPage extends BaseComponent {
         
         ${this.isDetailModalOpen ? this.renderDetailModal() : ''}
         ${this.notification ? this.renderNotification() : ''}
+        
+        <!-- Formulario de creación de pagos -->
+        <payment-form 
+          .isOpen=${this.isPaymentFormOpen}
+          .onClose=${() => this.closePaymentForm()}
+          .onSuccess=${() => this.handlePaymentCreated()}
+          @notification=${this.showNotification}
+        ></payment-form>
       </div>
     `;
   }
@@ -215,7 +270,7 @@ export class PaymentsPage extends BaseComponent {
         pending: () => html`
           <div class="d-flex justify-content-center py-5">
             <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
+              <span class="visually-hidden">Cargando pagos...</span>
             </div>
           </div>
         `,
@@ -225,7 +280,7 @@ export class PaymentsPage extends BaseComponent {
               <div class="text-center py-5">
                 <i class="fas fa-search fa-3x text-muted mb-3"></i>
                 <p class="lead">No se encontraron pagos</p>
-                <p class="text-muted">Intenta cambiar los filtros de búsqueda</p>
+                <p class="text-muted">Intenta cambiar los filtros de búsqueda o <a href="#" @click=${this.openPaymentForm}>agregar un nuevo pago</a></p>
               </div>
             `;
           }
@@ -249,7 +304,12 @@ export class PaymentsPage extends BaseComponent {
                     <tr>
                       <td>${payment.id}</td>
                       <td>${new Date(payment.fecha).toLocaleDateString()}</td>
-                      <td>${payment.estudiante.nombre} ${payment.estudiante.apellido}</td>
+                      <td>
+                        ${payment.estudiante 
+                          ? html`${payment.estudiante.nombre} ${payment.estudiante.apellido}`
+                          : html`<span class="text-danger">Datos no disponibles</span>`
+                        }
+                      </td>
                       <td>$${payment.monto.toFixed(2)}</td>
                       <td>${this.renderPaymentType(payment.type)}</td>
                       <td>${this.renderPaymentStatus(payment.status)}</td>
@@ -281,9 +341,17 @@ export class PaymentsPage extends BaseComponent {
           `;
         },
         error: (error) => html`
-          <div class="alert alert-danger" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            Error al cargar los pagos: ${error.message}
+          <div class="alert alert-danger my-4" role="alert">
+            <div class="text-center mb-3">
+              <i class="fas fa-exclamation-circle fs-3"></i>
+            </div>
+            <h5 class="text-center">Error al cargar los pagos</h5>
+            <p class="text-center">${error.message}</p>
+            <div class="text-center mt-3">
+              <button class="btn btn-primary" @click=${() => this.loadPaymentsTask.run()}>
+                <i class="fas fa-sync-alt me-1"></i> Reintentar
+              </button>
+            </div>
           </div>
         `
       })}
@@ -319,16 +387,25 @@ export class PaymentsPage extends BaseComponent {
                 </div>
               </div>
               
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <p class="mb-1 text-muted">Estudiante</p>
-                  <p class="fw-bold">${this.selectedPayment.estudiante.nombre} ${this.selectedPayment.estudiante.apellido}</p>
+              ${this.selectedPayment.estudiante ? html`
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <p class="mb-1 text-muted">Estudiante</p>
+                    <p class="fw-bold">${this.selectedPayment.estudiante.nombre} ${this.selectedPayment.estudiante.apellido}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-1 text-muted">Código</p>
+                    <p class="fw-bold">${this.selectedPayment.estudiante.codigo}</p>
+                  </div>
                 </div>
-                <div class="col-md-6">
-                  <p class="mb-1 text-muted">Código</p>
-                  <p class="fw-bold">${this.selectedPayment.estudiante.codigo}</p>
+              ` : html`
+                <div class="row mb-3">
+                  <div class="col-12">
+                    <p class="mb-1 text-muted">Estudiante</p>
+                    <p class="text-danger">Información del estudiante no disponible</p>
+                  </div>
                 </div>
-              </div>
+              `}
               
               <div class="row mb-3">
                 <div class="col-md-6">

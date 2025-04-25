@@ -13,6 +13,7 @@ import './infrastructure/adapters/ui/pages/not-found-page';
 import './infrastructure/adapters/ui/components/student-form';
 import './infrastructure/adapters/ui/components/student-filter';
 import './infrastructure/adapters/ui/components/payment-filter';
+import './infrastructure/adapters/ui/components/payment-form';
 import './infrastructure/adapters/ui/components/api-status';
 
 // Servicios singleton y configuración global
