@@ -11,7 +11,9 @@
     "lint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,js,html,css}\"",
     "clean-install": "rm -rf node_modules package-lock.json && npm install",
-    "prepare": "husky"
+    "prepare": "husky",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "lint-staged": {
     "src/**/*.{ts,js}": [
@@ -31,6 +33,11 @@
     "lit": "^3.0.0"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-links": "^8.6.12",
+    "@storybook/builder-vite": "^8.6.12",
+    "@storybook/web-components": "^8.6.12",
+    "@storybook/web-components-vite": "^8.6.12",
     "@types/node": "^20.10.3",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
