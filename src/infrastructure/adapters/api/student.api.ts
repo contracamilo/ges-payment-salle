@@ -63,10 +63,18 @@ export class StudentApiRepository implements StudentRepository {
    * Crea un nuevo estudiante
    */
   async create(student: CreateStudentDto): Promise<Student> {
-    return fetchApi<Student>('/estudiantes', {
-      method: 'POST',
-      body: JSON.stringify(student)
-    });
+    console.log('StudentApiRepository: Creando nuevo estudiante', student);
+    try {
+      const result = await fetchApi<Student>('/estudiantes', {
+        method: 'POST',
+        body: JSON.stringify(student)
+      });
+      console.log('StudentApiRepository: Estudiante creado con éxito', result);
+      return result;
+    } catch (error) {
+      console.error('StudentApiRepository: Error al crear estudiante', error);
+      throw error;
+    }
   }
 
   /**

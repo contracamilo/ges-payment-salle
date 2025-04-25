@@ -13,7 +13,8 @@ const getEnv = (key: string, defaultValue: string): string => {
 // API configuration
 export const API_CONFIG = {
   BASE_URL: getEnv('API_URL', 'http://localhost:8080'),
-  TIMEOUT: 30000, // 30 segundos de timeout para las peticiones
+  TIMEOUT: 60000, // 60 segundos de timeout para las peticiones
+  DEBUG_MODE: true, // Activar logs de depuración para API
 };
 
 // App configuration

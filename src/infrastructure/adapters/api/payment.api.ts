@@ -37,6 +37,7 @@ export class PaymentApiRepository implements PaymentRepository {
     
     if (filters.estudiante_codigo) {
       params.append('estudiante_codigo', filters.estudiante_codigo);
+      console.log(`Filtrando pagos por estudiante: ${filters.estudiante_codigo}`);
     }
     if (filters.fechaInicio) {
       params.append('fechaInicio', filters.fechaInicio);
@@ -51,7 +52,17 @@ export class PaymentApiRepository implements PaymentRepository {
       params.append('type', filters.type);
     }
 
-    return fetchApi<Payment[]>(`/pagos?${params.toString()}`);
+    const url = `/pagos?${params.toString()}`;
+    console.log(`Realizando petición API: ${url}`);
+    
+    try {
+      const payments = await fetchApi<Payment[]>(url);
+      console.log(`Pagos recibidos: ${payments.length}`);
+      return payments;
+    } catch (error) {
+      console.error(`Error al obtener pagos con filtros:`, error);
+      throw error;
+    }
   }
 
   /**

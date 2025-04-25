@@ -13,11 +13,11 @@ import { PropertyValues } from 'lit';
 @customElement('student-payments-page')
 export class StudentPaymentsPage extends BaseComponent {
   @property({ type: String }) codigo: string = '';
-  @property({ type: String }) studentCode: string = '';
   @state() private student: Student | null = null;
   @state() private selectedPaymentId: number | null = null;
   @state() private isDetailModalOpen: boolean = false;
   @state() private notification: { message: string; type: string } | null = null;
+  @state() private isLoading: boolean = true;
 
   /**
    * Task para cargar los datos del estudiante
@@ -25,8 +25,23 @@ export class StudentPaymentsPage extends BaseComponent {
   private loadStudentTask = new Task(
     this,
     async () => {
-      if (!this.codigo) return null;
-      return await window.services.studentUseCase.getStudentByCode(this.codigo);
+      this.isLoading = true;
+      if (!this.codigo) {
+        this.isLoading = false;
+        console.error('No se proporcionó código de estudiante');
+        return null;
+      }
+      console.log('Cargando estudiante con código:', this.codigo);
+      try {
+        const student = await window.services.studentUseCase.getStudentByCode(this.codigo);
+        console.log('Estudiante cargado:', student);
+        this.isLoading = false;
+        return student;
+      } catch (error) {
+        console.error('Error al cargar estudiante:', error);
+        this.isLoading = false;
+        throw error;
+      }
     },
     () => [this.codigo]
   );
@@ -37,8 +52,19 @@ export class StudentPaymentsPage extends BaseComponent {
   private loadPaymentsTask = new Task(
     this,
     async () => {
-      if (!this.codigo) return [];
-      return await window.services.studentUseCase.getStudentPayments(this.codigo);
+      if (!this.codigo) {
+        console.error('No se proporcionó código de estudiante para cargar pagos');
+        return [];
+      }
+      console.log('Cargando pagos para estudiante con código:', this.codigo);
+      try {
+        const payments = await window.services.paymentUseCase.getPaymentsByFilters({ estudiante_codigo: this.codigo });
+        console.log('Pagos cargados:', payments);
+        return payments;
+      } catch (error) {
+        console.error('Error al cargar los pagos:', error);
+        throw error;
+      }
     },
     () => [this.codigo]
   );
@@ -101,75 +127,150 @@ export class StudentPaymentsPage extends BaseComponent {
     }
   }
 
+  override connectedCallback() {
+    super.connectedCallback();
+    
+    // Obtener el código de estudiante de la URL
+    const location = Router.location;
+    if (location && location.params && location.params.codigo) {
+      this.codigo = location.params.codigo as string;
+      console.log('StudentPaymentsPage - Código obtenido de Router.location:', this.codigo);
+    } else {
+      // Intentar obtener el código de la URL directamente
+      const path = window.location.pathname;
+      const matches = path.match(/\/estudiantes\/([^\/]+)\/pagos/);
+      if (matches && matches[1]) {
+        this.codigo = matches[1];
+        console.log('StudentPaymentsPage - Código obtenido de la URL:', this.codigo);
+      } else {
+        console.error('No se pudo obtener el código de estudiante de la URL:', path);
+      }
+    }
+    
+    // Asegurar que los servicios estén disponibles
+    if (window.services) {
+      console.log('Servicios disponibles, cargando datos...');
+      this.loadStudentTask.run();
+      this.loadPaymentsTask.run();
+    } else {
+      console.log('Servicios no disponibles, esperando inicialización...');
+      window.addEventListener('services-initialized', () => {
+        console.log('Servicios inicializados, cargando datos del estudiante y pagos');
+        this.loadStudentTask.run();
+        this.loadPaymentsTask.run();
+      });
+    }
+  }
+
+  override updated(changedProperties: PropertyValues) {
+    if (changedProperties.has('codigo') && this.codigo) {
+      console.log('Código de estudiante actualizado:', this.codigo);
+      this.loadStudentTask.run();
+      this.loadPaymentsTask.run();
+    }
+  }
+
   override render() {
     return html`
-      ${this.loadStudentTask.render({
-        pending: () => html`<div class="loading">Cargando información del estudiante...</div>`,
-        complete: (student) => {
-          if (!student) {
-            return html`
-              <div class="error-container">
-                <div class="error">Estudiante no encontrado</div>
-                <button class="button button-primary" @click=${this.navigateBack}>
-                  Volver a la lista
-                </button>
+      <div class="container">
+        ${this.loadStudentTask.render({
+          pending: () => html`
+            <div class="d-flex justify-content-center my-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando información del estudiante...</span>
               </div>
-            `;
-          }
-          
-          this.student = student;
-          return html`
-            <div class="student-payments-page">
-              <div class="page-header">
-                <button class="button button-outline" @click=${this.navigateBack}>
-                  &larr; Volver
-                </button>
-                <h1>Pagos de ${student.nombre} ${student.apellido}</h1>
-              </div>
-              
-              <div class="student-info card">
-                <div class="card-header">
-                  <h2>Información del Estudiante</h2>
+            </div>
+          `,
+          complete: (student) => {
+            if (!student) {
+              return html`
+                <div class="alert alert-warning text-center my-5" role="alert">
+                  <i class="fas fa-exclamation-triangle fs-3 mb-3"></i>
+                  <h4>Estudiante no encontrado</h4>
+                  <p>No se pudo encontrar el estudiante con código ${this.codigo}</p>
+                  <button class="btn btn-primary mt-2" @click=${this.navigateBack}>
+                    <i class="fas fa-arrow-left me-1"></i> Volver a la lista
+                  </button>
                 </div>
-                <div class="card-body">
-                  <div class="info-row">
-                    <div class="info-item">
-                      <span class="info-label">Código:</span>
-                      <span class="info-value">${student.codigo}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Nombre:</span>
-                      <span class="info-value">${student.nombre} ${student.apellido}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Programa:</span>
-                      <span class="info-value">${student.programaId}</span>
+              `;
+            }
+            
+            this.student = student;
+            return html`
+              <div class="student-payments-page py-4">
+                <div class="row mb-4 align-items-center">
+                  <div class="col-md-6">
+                    <button class="btn btn-outline-secondary mb-3" @click=${this.navigateBack}>
+                      <i class="fas fa-arrow-left me-1"></i> Volver
+                    </button>
+                    <h1 class="display-5 fw-bold">
+                      <i class="fas fa-money-bill-wave text-primary me-2"></i>
+                      Pagos del Estudiante
+                    </h1>
+                  </div>
+                </div>
+              
+                <div class="card shadow-sm mb-4">
+                  <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-user-graduate me-2"></i>
+                      Información del Estudiante
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <p class="text-muted mb-1">Código</p>
+                        <p class="fw-bold">${student.codigo}</p>
+                      </div>
+                      <div class="col-md-4">
+                        <p class="text-muted mb-1">Nombre completo</p>
+                        <p class="fw-bold">${student.nombre} ${student.apellido}</p>
+                      </div>
+                      <div class="col-md-4">
+                        <p class="text-muted mb-1">Programa</p>
+                        <p class="fw-bold">${student.programaId}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
               
-              <div class="payments-list card">
-                <div class="card-header">
-                  <h2>Historial de Pagos</h2>
+                <div class="card shadow-sm">
+                  <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                      <i class="fas fa-clipboard-list me-2"></i>
+                      Historial de Pagos
+                    </h5>
+                    <span class="badge bg-primary rounded-pill">
+                      ${this.loadPaymentsTask.render({
+                        pending: () => html`...`,
+                        complete: (payments) => html`${payments.length}`,
+                        error: () => html`0`
+                      })}
+                    </span>
+                  </div>
+                  <div class="card-body">
+                    ${this.renderPaymentsTable()}
+                  </div>
                 </div>
-                <div class="card-body">
-                  ${this.renderPaymentsTable()}
-                </div>
-              </div>
               
-              ${this.isDetailModalOpen ? this.renderDetailModal() : ''}
-              ${this.notification ? this.renderNotification() : ''}
+                ${this.isDetailModalOpen ? this.renderDetailModal() : ''}
+                ${this.notification ? this.renderNotification() : ''}
+              </div>
+            `;
+          },
+          error: (error) => html`
+            <div class="alert alert-danger text-center my-5" role="alert">
+              <i class="fas fa-exclamation-circle fs-3 mb-3"></i>
+              <h4>Error al cargar datos</h4>
+              <p>${error.message}</p>
+              <button class="btn btn-primary mt-2" @click=${this.navigateBack}>
+                <i class="fas fa-arrow-left me-1"></i> Volver a la lista
+              </button>
             </div>
-          `;
-        },
-        error: (error) => html`
-          <div class="error">Error al cargar datos: ${error.message}</div>
-          <button class="button button-primary" @click=${this.navigateBack}>
-            Volver a la lista
-          </button>
-        `
-      })}
+          `
+        })}
+      </div>
     `;
   }
 
@@ -179,42 +280,69 @@ export class StudentPaymentsPage extends BaseComponent {
   private renderPaymentsTable() {
     return html`
       ${this.loadPaymentsTask.render({
-        pending: () => html`<div class="loading">Cargando pagos...</div>`,
+        pending: () => html`
+          <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando pagos...</span>
+            </div>
+          </div>
+        `,
         complete: (payments) => {
-          if (payments.length === 0) {
-            return html`<div class="empty-state">Este estudiante no tiene pagos registrados</div>`;
+          console.log('Renderizando tabla de pagos:', payments);
+          if (!payments || payments.length === 0) {
+            return html`
+              <div class="alert alert-info my-4" role="alert">
+                <div class="text-center mb-3">
+                  <i class="fas fa-info-circle fs-3"></i>
+                </div>
+                <h5 class="text-center">No hay pagos registrados</h5>
+                <p class="text-center">
+                  Este estudiante no tiene pagos registrados en el sistema.
+                </p>
+              </div>
+            `;
           }
           
           return html`
-            <div class="table-container">
-              <table>
-                <thead>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead class="table-light">
                   <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Monto</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Monto</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col" class="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${payments.map(payment => html`
                     <tr>
-                      <td data-label="ID">${payment.id}</td>
-                      <td data-label="Fecha">${new Date(payment.fecha).toLocaleDateString()}</td>
-                      <td data-label="Monto">$${payment.monto.toFixed(2)}</td>
-                      <td data-label="Tipo">${this.renderPaymentType(payment.type)}</td>
-                      <td data-label="Estado">${this.renderPaymentStatus(payment.status)}</td>
-                      <td data-label="Acciones" class="actions-cell">
-                        <button class="button button-primary button-sm" @click=${() => this.showPaymentDetail(payment.id)}>
-                          Ver Detalles
-                        </button>
-                        ${payment.status === PaymentStatus.PENDIENTE ? html`
-                          <button class="button button-secondary button-sm" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}>
-                            Aprobar
+                      <td>${payment.id}</td>
+                      <td>${new Date(payment.fecha).toLocaleDateString()}</td>
+                      <td>$${payment.monto.toFixed(2)}</td>
+                      <td>${this.renderPaymentType(payment.type)}</td>
+                      <td>${this.renderPaymentStatus(payment.status)}</td>
+                      <td>
+                        <div class="d-flex justify-content-end gap-2">
+                          <button 
+                            class="btn btn-sm btn-outline-primary"
+                            @click=${() => this.showPaymentDetail(payment.id)}
+                            title="Ver detalles"
+                          >
+                            <i class="fas fa-eye"></i>
                           </button>
-                        ` : ''}
+                          ${payment.status === PaymentStatus.PENDIENTE ? html`
+                            <button 
+                              class="btn btn-sm btn-outline-success"
+                              @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
+                              title="Aprobar pago"
+                            >
+                              <i class="fas fa-check"></i>
+                            </button>
+                          ` : ''}
+                        </div>
                       </td>
                     </tr>
                   `)}
@@ -223,7 +351,22 @@ export class StudentPaymentsPage extends BaseComponent {
             </div>
           `;
         },
-        error: (error) => html`<div class="error">Error al cargar pagos: ${error.message}</div>`
+        error: (error) => html`
+          <div class="alert alert-danger my-4" role="alert">
+            <div class="text-center mb-3">
+              <i class="fas fa-exclamation-circle fs-3"></i>
+            </div>
+            <h5 class="text-center">Error al cargar los pagos</h5>
+            <p class="text-center">
+              ${error.message || 'Ocurrió un error inesperado'}
+            </p>
+            <div class="text-center mt-3">
+              <button class="btn btn-sm btn-primary" @click=${() => this.loadPaymentsTask.run()}>
+                <i class="fas fa-sync-alt me-1"></i> Reintentar
+              </button>
+            </div>
+          </div>
+        `
       })}
     `;
   }
@@ -235,9 +378,19 @@ export class StudentPaymentsPage extends BaseComponent {
     return html`
       ${this.loadPaymentsTask.render({
         pending: () => html`
-          <div class="modal-overlay">
-            <div class="modal-container">
-              <div class="loading">Cargando detalles del pago...</div>
+          <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title">Detalles del Pago</h5>
+                  <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando detalles...</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         `,
@@ -249,67 +402,71 @@ export class StudentPaymentsPage extends BaseComponent {
           }
           
           return html`
-            <div class="modal-overlay">
-              <div class="modal-container">
-                <div class="modal-header">
-                  <h3>Detalles del Pago</h3>
-                  <button class="close-button" @click=${this.closeDetailModal}>×</button>
-                </div>
-                <div class="modal-body">
-                  <div class="payment-detail">
-                    <div class="detail-row">
-                      <span class="detail-label">ID:</span>
-                      <span class="detail-value">${payment.id}</span>
+            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                      <i class="fas fa-info-circle me-2"></i>
+                      Detalles del Pago
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <p class="mb-1 text-muted">ID del Pago</p>
+                        <p class="fw-bold">${payment.id}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <p class="mb-1 text-muted">Fecha</p>
+                        <p class="fw-bold">${new Date(payment.fecha).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Fecha:</span>
-                      <span class="detail-value">${new Date(payment.fecha).toLocaleDateString()}</span>
+                    
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <p class="mb-1 text-muted">Monto</p>
+                        <p class="fw-bold">$${payment.monto.toFixed(2)}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <p class="mb-1 text-muted">Tipo</p>
+                        <p class="fw-bold">${this.renderPaymentType(payment.type)}</p>
+                      </div>
                     </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Monto:</span>
-                      <span class="detail-value">$${payment.monto.toFixed(2)}</span>
-                    </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Tipo:</span>
-                      <span class="detail-value">${this.renderPaymentType(payment.type)}</span>
-                    </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Estado:</span>
-                      <span class="detail-value">${this.renderPaymentStatus(payment.status)}</span>
+                    
+                    <div class="row">
+                      <div class="col-12">
+                        <p class="mb-1 text-muted">Estado</p>
+                        <p class="fw-bold">${this.renderPaymentStatus(payment.status)}</p>
+                      </div>
                     </div>
                     
                     ${payment.file ? html`
-                      <div class="file-section">
-                        <h4>Comprobante de Pago</h4>
-                        <a href="${payment.file}" target="_blank" class="button button-outline">
-                          Ver Comprobante
-                        </a>
+                      <div class="row mt-3">
+                        <div class="col-12">
+                          <p class="mb-1 text-muted">Comprobante</p>
+                          <a href="${payment.file}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-alt me-1"></i> Ver comprobante
+                          </a>
+                        </div>
                       </div>
                     ` : ''}
-                    
-                    <div class="actions-section">
-                      <h4>Acciones</h4>
-                      <div class="action-buttons">
-                        ${payment.status === PaymentStatus.PENDIENTE ? html`
-                          <button class="button button-success" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}>
-                            Aprobar Pago
-                          </button>
-                          <button class="button button-danger" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.RECHAZADO)}>
-                            Rechazar Pago
-                          </button>
-                        ` : ''}
-                        ${payment.status === PaymentStatus.PAGADO ? html`
-                          <button class="button button-warning" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PENDIENTE)}>
-                            Marcar como Pendiente
-                          </button>
-                        ` : ''}
-                        ${payment.status === PaymentStatus.RECHAZADO ? html`
-                          <button class="button button-primary" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PENDIENTE)}>
-                            Marcar como Pendiente
-                          </button>
-                        ` : ''}
-                      </div>
-                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @click=${this.closeDetailModal}>
+                      <i class="fas fa-times me-1"></i> Cerrar
+                    </button>
+                    ${payment.status === PaymentStatus.PENDIENTE ? html`
+                      <button type="button" class="btn btn-success" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}>
+                        <i class="fas fa-check me-1"></i> Aprobar Pago
+                      </button>
+                    ` : ''}
+                    ${payment.status === PaymentStatus.PAGADO ? html`
+                      <button type="button" class="btn btn-warning" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PENDIENTE)}>
+                        <i class="fas fa-undo me-1"></i> Marcar como Pendiente
+                      </button>
+                    ` : ''}
                   </div>
                 </div>
               </div>
@@ -317,12 +474,27 @@ export class StudentPaymentsPage extends BaseComponent {
           `;
         },
         error: (error) => html`
-          <div class="modal-overlay">
-            <div class="modal-container">
-              <div class="error">Error al cargar detalles: ${error.message}</div>
-              <button class="button button-primary" @click=${this.closeDetailModal}>
-                Cerrar
-              </button>
+          <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                  <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error
+                  </h5>
+                  <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+                </div>
+                <div class="modal-body">
+                  <div class="alert alert-danger" role="alert">
+                    Error al cargar detalles: ${error.message}
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" @click=${this.closeDetailModal}>
+                    Cerrar
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         `
@@ -334,11 +506,29 @@ export class StudentPaymentsPage extends BaseComponent {
    * Renderiza una notificación
    */
   private renderNotification() {
-    if (!this.notification) return '';
+    if (!this.notification) return html``;
+    
+    const typeClass = this.notification.type === 'success' ? 'alert-success' : 
+                      this.notification.type === 'error' ? 'alert-danger' : 
+                      'alert-warning';
+    
+    const icon = this.notification.type === 'success' ? 'fas fa-check-circle' : 
+                this.notification.type === 'error' ? 'fas fa-exclamation-circle' : 
+                'fas fa-exclamation-triangle';
     
     return html`
-      <div class="notification ${this.notification.type}">
-        ${this.notification.message}
+      <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header ${typeClass} text-white">
+            <i class="${icon} me-2"></i>
+            <strong class="me-auto">Notificación</strong>
+            <button type="button" class="btn-close btn-close-white" 
+                    @click=${() => this.notification = null}></button>
+          </div>
+          <div class="toast-body">
+            ${this.notification.message}
+          </div>
+        </div>
       </div>
     `;
   }
@@ -347,289 +537,39 @@ export class StudentPaymentsPage extends BaseComponent {
    * Renderiza el tipo de pago con formato adecuado
    */
   private renderPaymentType(type: PaymentType) {
-    const typeMap = {
-      [PaymentType.EFECTIVO]: 'Efectivo',
-      [PaymentType.TRANSFERENCIA]: 'Transferencia',
-      [PaymentType.CHEQUE]: 'Cheque',
-      [PaymentType.TARJETA]: 'Tarjeta',
-      [PaymentType.OTRO]: 'Otro'
-    };
-    
-    return typeMap[type] || type;
+    switch (type) {
+      case PaymentType.EFECTIVO:
+        return html`<span class="badge bg-success">Efectivo</span>`;
+      case PaymentType.TRANSFERENCIA:
+        return html`<span class="badge bg-primary">Transferencia</span>`;
+      case PaymentType.CHEQUE:
+        return html`<span class="badge bg-info">Cheque</span>`;
+      case PaymentType.TARJETA:
+        return html`<span class="badge bg-warning">Tarjeta</span>`;
+      case PaymentType.OTRO:
+        return html`<span class="badge bg-secondary">Otro</span>`;
+      default:
+        return html`<span class="badge bg-light text-dark">${type}</span>`;
+    }
   }
 
   /**
    * Renderiza el estado del pago con formato adecuado
    */
   private renderPaymentStatus(status: PaymentStatus) {
-    const statusLabels: Record<PaymentStatus, string> = {
-      [PaymentStatus.CREADO]: 'Creado',
-      [PaymentStatus.PENDIENTE]: 'Pendiente',
-      [PaymentStatus.PAGADO]: 'Pagado',
-      [PaymentStatus.RECHAZADO]: 'Rechazado',
-      [PaymentStatus.CANCELADO]: 'Cancelado'
-    };
-
-    const statusClasses: Record<PaymentStatus, string> = {
-      [PaymentStatus.CREADO]: 'status-created',
-      [PaymentStatus.PENDIENTE]: 'status-pending',
-      [PaymentStatus.PAGADO]: 'status-paid',
-      [PaymentStatus.RECHAZADO]: 'status-rejected',
-      [PaymentStatus.CANCELADO]: 'status-cancelled'
-    };
-
-    return html`<span class="status-badge ${statusClasses[status]}">${statusLabels[status]}</span>`;
-  }
-
-  static styles = css`
-    :host {
-      display: block;
-    }
-    
-    .student-payments-page {
-      width: 100%;
-    }
-    
-    .page-header {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-4);
-      margin-bottom: var(--spacing-6);
-    }
-    
-    h1 {
-      margin: 0;
-    }
-    
-    .card {
-      margin-bottom: var(--spacing-6);
-    }
-    
-    .info-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-6);
-    }
-    
-    .info-item {
-      margin-bottom: var(--spacing-2);
-    }
-    
-    .info-label {
-      font-weight: 600;
-      margin-right: var(--spacing-2);
-      color: var(--gray-600);
-    }
-    
-    .actions-cell {
-      display: flex;
-      gap: var(--spacing-2);
-    }
-    
-    .button-sm {
-      padding: var(--spacing-1) var(--spacing-2);
-      font-size: var(--font-size-xs);
-    }
-    
-    .loading, .error, .empty-state {
-      padding: var(--spacing-6);
-      text-align: center;
-      color: var(--gray-600);
-    }
-    
-    .error {
-      color: var(--danger-color);
-    }
-    
-    .error-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--spacing-4);
-      padding: var(--spacing-6);
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: var(--spacing-1) var(--spacing-2);
-      border-radius: var(--border-radius);
-      font-size: var(--font-size-xs);
-      font-weight: 600;
-    }
-    
-    .status-created {
-      background-color: var(--gray-200);
-      color: var(--gray-700);
-    }
-    
-    .status-pending {
-      background-color: var(--warning-color);
-      color: white;
-    }
-    
-    .status-paid {
-      background-color: var(--success-color);
-      color: white;
-    }
-    
-    .status-rejected {
-      background-color: var(--danger-color);
-      color: white;
-    }
-    
-    .status-cancelled {
-      background-color: var(--gray-500);
-      color: white;
-    }
-    
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    
-    .modal-container {
-      background-color: white;
-      border-radius: var(--border-radius-lg);
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow-lg);
-    }
-    
-    .modal-header {
-      padding: var(--spacing-4);
-      border-bottom: 1px solid var(--gray-200);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .modal-body {
-      padding: var(--spacing-4);
-    }
-    
-    .close-button {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--gray-500);
-    }
-    
-    .close-button:hover {
-      color: var(--gray-700);
-    }
-    
-    .payment-detail {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-4);
-    }
-    
-    .detail-row {
-      display: flex;
-      margin-bottom: var(--spacing-2);
-    }
-    
-    .detail-label {
-      width: 150px;
-      font-weight: 600;
-      color: var(--gray-700);
-    }
-    
-    .detail-value {
-      flex: 1;
-    }
-    
-    h4 {
-      margin-top: var(--spacing-4);
-      margin-bottom: var(--spacing-2);
-      color: var(--primary-color);
-      border-bottom: 1px solid var(--gray-200);
-      padding-bottom: var(--spacing-2);
-    }
-    
-    .file-section, .actions-section {
-      margin-top: var(--spacing-4);
-    }
-    
-    .action-buttons {
-      display: flex;
-      gap: var(--spacing-2);
-      flex-wrap: wrap;
-    }
-    
-    .notification {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: var(--spacing-3) var(--spacing-4);
-      border-radius: var(--border-radius);
-      color: white;
-      box-shadow: var(--shadow-md);
-      z-index: 1000;
-      animation: slide-in 0.3s ease-out;
-    }
-    
-    .notification.success {
-      background-color: var(--success-color);
-    }
-    
-    .notification.error {
-      background-color: var(--danger-color);
-    }
-    
-    .notification.warning {
-      background-color: var(--warning-color);
-    }
-    
-    @keyframes slide-in {
-      from {
-        transform: translateY(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-  `;
-
-  override connectedCallback() {
-    super.connectedCallback();
-    console.log('StudentPaymentsPage connected, código:', this.codigo);
-    this.loadStudentTask.run();
-  }
-
-  override updated(changedProperties: PropertyValues) {
-    console.log('StudentPaymentsPage updated, props changed:', [...changedProperties.keys()]);
-    if (changedProperties.has('studentCode') && this.studentCode) {
-      console.log('Actualizando código desde studentCode:', this.studentCode);
-      this.codigo = this.studentCode;
-    }
-  }
-
-  private async loadStudentData() {
-    try {
-      console.log('Intentando cargar datos del estudiante con código:', this.codigo);
-      const student = await window.services.studentUseCase.getStudentByCode(this.codigo);
-      console.log('Datos del estudiante cargados:', student);
-      
-      if (student) {
-        this.student = student;
-        this.loadPaymentsTask.run();
-      }
-    } catch (error) {
-      console.error('Error al cargar datos del estudiante:', error);
+    switch (status) {
+      case PaymentStatus.CREADO:
+        return html`<span class="badge bg-secondary">Creado</span>`;
+      case PaymentStatus.PENDIENTE:
+        return html`<span class="badge bg-warning">Pendiente</span>`;
+      case PaymentStatus.PAGADO:
+        return html`<span class="badge bg-success">Pagado</span>`;
+      case PaymentStatus.RECHAZADO:
+        return html`<span class="badge bg-danger">Rechazado</span>`;
+      case PaymentStatus.CANCELADO:
+        return html`<span class="badge bg-dark">Cancelado</span>`;
+      default:
+        return html`<span class="badge bg-light text-dark">${status}</span>`;
     }
   }
 } 

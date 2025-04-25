@@ -23,6 +23,21 @@ export class AppHeader extends BaseComponent {
    */
   private isActive(url: string): boolean {
     const path = window.location.pathname;
+    
+    // Para la ruta de estudiantes
+    if (url === '/estudiantes') {
+      // Es activo si es exactamente '/estudiantes' o si comienza con '/estudiantes/' pero no es '/estudiantes/*/pagos'
+      return path === url || 
+             (path.startsWith(url + '/') && !path.includes('/pagos'));
+    }
+    
+    // Para la ruta de pagos
+    if (url === '/pagos') {
+      // Es activo si es exactamente '/pagos' o si incluye '/pagos' en cualquier parte de la ruta
+      return path === url || path.includes('/pagos');
+    }
+    
+    // Para otras rutas, coincidencia exacta o comienza con
     return path === url || path.startsWith(url + '/');
   }
 
@@ -73,7 +88,7 @@ export class AppHeader extends BaseComponent {
 
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 mx-auto">
               <li>
-                <a class="nav-link px-3 ${this.isActive('/estudiantes') ? 'text-secondary' : 'text-white'}" 
+                <a class="nav-link px-3 ${this.isActive('/estudiantes') ? 'active fw-bold text-white' : 'text-white'}" 
                    href="/estudiantes"
                    @click=${(e: Event) => {
                      e.preventDefault();
@@ -83,7 +98,7 @@ export class AppHeader extends BaseComponent {
                 </a>
               </li>
               <li>
-                <a class="nav-link px-3 ${this.isActive('/pagos') ? 'text-secondary' : 'text-white'}"
+                <a class="nav-link px-3 ${this.isActive('/pagos') ? 'active fw-bold text-white' : 'text-white'}"
                    href="/pagos" 
                    @click=${(e: Event) => {
                      e.preventDefault();
@@ -147,15 +162,27 @@ export class AppHeader extends BaseComponent {
     .nav-link {
       color: rgba(255, 255, 255, 0.55);
       transition: color 0.15s ease-in-out;
+      position: relative;
     }
     
     .nav-link:hover {
       color: rgba(255, 255, 255, 0.75);
     }
     
-    .nav-link.text-secondary {
-      color: #6c757d;
-      font-weight: bold;
+    .nav-link.active {
+      color: #fff;
+      position: relative;
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 30%;
+      right: 30%;
+      height: 2px;
+      background-color: #fff;
+      border-radius: 2px;
     }
   `;
 } 

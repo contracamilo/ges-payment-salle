@@ -13,8 +13,9 @@ export const DEFAULT_FETCH_OPTIONS: RequestInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  // Añadimos timeout para evitar peticiones infinitas
-  signal: AbortSignal.timeout(API_CONFIG.TIMEOUT)
+  credentials: 'same-origin',
+  mode: 'cors'
+  // No añadimos el signal de timeout aquí para poder manejarlo en fetchApi
 };
 
 /**
@@ -51,6 +52,22 @@ function getErrorMessage(status: number): string {
 }
 
 /**
+ * Log para depuración de llamadas API
+ */
+function logApiCall(method: string, url: string, data?: any, error?: any) {
+  if (API_CONFIG.DEBUG_MODE) {
+    console.group(`API Call: ${method} ${url}`);
+    if (data) {
+      console.log('Data:', data);
+    }
+    if (error) {
+      console.error('Error:', error);
+    }
+    console.groupEnd();
+  }
+}
+
+/**
  * Realiza una petición HTTP y maneja errores comunes
  * 
  * @param url URL del endpoint a llamar
@@ -58,12 +75,24 @@ function getErrorMessage(status: number): string {
  * @returns Promise con la respuesta procesada
  */
 export async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
+  // Crear un controlador de aborto con el tiempo de espera configurado
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+  
+  // Registramos la URL que estamos llamando
+  const method = options.method || 'GET';
+  logApiCall(method, url, options.body);
+  
   try {
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...DEFAULT_FETCH_OPTIONS,
-      ...options
+      ...options,
+      signal: controller.signal
     });
 
+    // Limpiamos el timeout ya que la petición ha terminado
+    clearTimeout(timeoutId);
+    
     // Si la respuesta no es exitosa, lanzamos un error
     if (!response.ok) {
       let errorData;
@@ -73,11 +102,14 @@ export async function fetchApi<T>(url: string, options: RequestInit = {}): Promi
         errorData = { message: getErrorMessage(response.status) };
       }
       
-      throw new ApiError(
+      const error = new ApiError(
         errorData.message || getErrorMessage(response.status),
         response.status,
         errorData
       );
+      
+      logApiCall(method, url, options.body, error);
+      throw error;
     }
 
     // Si el endpoint no devuelve datos, retornamos un objeto vacío
@@ -86,30 +118,46 @@ export async function fetchApi<T>(url: string, options: RequestInit = {}): Promi
     }
 
     // Procesamos la respuesta como JSON
-    return response.json();
+    const data = await response.json();
+    logApiCall(method, url, data);
+    return data;
+    
   } catch (error: any) {
+    // Limpiamos el timeout en caso de error
+    clearTimeout(timeoutId);
+    
     // Si es un error de tiempo de espera o de red
     if (error.name === 'AbortError') {
-      throw new ApiError('Tiempo de espera agotado al conectar con el servidor', 408);
+      const apiError = new ApiError('Tiempo de espera agotado al conectar con el servidor', 408);
+      logApiCall(method, url, options.body, apiError);
+      throw apiError;
     } 
     
     // Si es un error de conexión
-    if (error.message && error.message.includes('Failed to fetch')) {
-      throw new ApiError(
+    if (error.message && (
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') ||
+        error.message.includes('Network request failed'))) {
+      const apiError = new ApiError(
         'No se pudo conectar al servidor. Verifique su conexión a internet o que el servidor esté disponible', 
         0
       );
+      logApiCall(method, url, options.body, apiError);
+      throw apiError;
     }
     
     // Si ya es un ApiError, lo propagamos
     if (error instanceof ApiError) {
+      logApiCall(method, url, options.body, error);
       throw error;
     }
     
     // Otros errores
-    throw new ApiError(
+    const apiError = new ApiError(
       error.message || 'Error desconocido al conectar con el API',
       0
     );
+    logApiCall(method, url, options.body, apiError);
+    throw apiError;
   }
 } 

@@ -4,6 +4,7 @@ import { Task } from '@lit-labs/task';
 import { Student } from '../../../../domain/models/student.model';
 import { StudentFilters } from '../../../../domain/models/filters.model';
 import { BaseComponent } from '../../ui/components/base-component';
+import { Router } from '@vaadin/router';
 
 /**
  * Página principal de estudiantes
@@ -320,11 +321,23 @@ export class StudentsPage extends BaseComponent {
    */
   private navigateToStudentPayments(codigo: string) {
     console.log('StudentsPage - Navegando a pagos del estudiante:', codigo);
-    const router = document.querySelector('app-router');
-    if (router && 'navigate' in router) {
-      (router as any).navigate(`/estudiantes/${codigo}/pagos`);
-    } else {
-      console.error('Router no encontrado o no tiene método navigate');
+    
+    try {
+      Router.go(`/estudiantes/${codigo}/pagos`);
+      console.log('Navegación realizada con éxito');
+    } catch (error) {
+      console.error('Error en la navegación:', error);
+      
+      // Si la navegación falla, intentamos un enfoque alternativo
+      const router = document.querySelector('app-router');
+      if (router && 'navigate' in router) {
+        console.log('Usando el método navigate del router');
+        (router as any).navigate(`/estudiantes/${codigo}/pagos`);
+      } else {
+        console.error('Router no encontrado o no tiene método navigate');
+        // Último recurso: cambiar la URL directamente
+        window.location.href = `/estudiantes/${codigo}/pagos`;
+      }
     }
   }
 
@@ -333,19 +346,24 @@ export class StudentsPage extends BaseComponent {
    */
   private renderStudentForm() {
     return html`
-      <div class="modal-overlay">
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3>${this.editingStudentCode ? 'Editar' : 'Crear'} Estudiante</h3>
-            <button class="close-button" @click=${this.closeForm}>×</button>
-          </div>
-          <div class="modal-body">
-            <student-form
-              .studentCode=${this.editingStudentCode}
-              @submit-success=${this.handleFormSubmit}
-              @submit-error=${(e: CustomEvent) => this.showNotification(e.detail.message, 'error')}
-              @cancel=${this.closeForm}
-            ></student-form>
+      <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">
+                <i class="${this.editingStudentCode ? 'fas fa-user-edit' : 'fas fa-user-plus'} me-2"></i>
+                ${this.editingStudentCode ? 'Editar' : 'Crear'} Estudiante
+              </h5>
+              <button type="button" class="btn-close btn-close-white" @click=${this.closeForm}></button>
+            </div>
+            <div class="modal-body">
+              <student-form
+                .studentCode=${this.editingStudentCode}
+                @submit-success=${this.handleFormSubmit}
+                @submit-error=${(e: CustomEvent) => this.showNotification(e.detail.message, 'error')}
+                @cancel=${this.closeForm}
+              ></student-form>
+            </div>
           </div>
         </div>
       </div>

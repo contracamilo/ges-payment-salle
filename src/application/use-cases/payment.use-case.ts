@@ -31,7 +31,15 @@ export class PaymentUseCase {
    * @returns Promise con array de pagos filtrados
    */
   async getPaymentsByFilters(filters: PaymentFilters): Promise<Payment[]> {
-    return this.repository.getByFilters(filters);
+    console.log('PaymentUseCase - Buscando pagos con filtros:', JSON.stringify(filters));
+    try {
+      const payments = await this.repository.getByFilters(filters);
+      console.log(`PaymentUseCase - Se encontraron ${payments.length} pagos`);
+      return payments;
+    } catch (error) {
+      console.error('PaymentUseCase - Error al buscar pagos con filtros:', error);
+      throw error;
+    }
   }
 
   /**

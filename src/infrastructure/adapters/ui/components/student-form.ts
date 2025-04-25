@@ -73,10 +73,18 @@ export class StudentForm extends BaseComponent {
     const field = input.name;
     const value = input.value;
 
-    this.formData = {
-      ...this.formData,
-      [field]: value
-    };
+    // Si es el campo de foto y está vacío, establecer como null
+    if (field === 'foto' && value.trim() === '') {
+      this.formData = {
+        ...this.formData,
+        [field]: null
+      };
+    } else {
+      this.formData = {
+        ...this.formData,
+        [field]: value
+      };
+    }
 
     // Limpiar el error cuando el usuario comienza a escribir en un campo
     if (this.errors[field]) {
@@ -167,10 +175,18 @@ export class StudentForm extends BaseComponent {
     this.dispatchEvent(new CustomEvent('cancel'));
   }
 
-  render() {
+  override render() {
     return html`
       ${this.loadStudentTask.render({
-        pending: () => this.studentCode ? html`<div class="loading">Cargando datos del estudiante...</div>` : this.renderForm(),
+        pending: () => this.studentCode 
+          ? html`
+            <div class="d-flex justify-content-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          ` 
+          : this.renderForm(),
         complete: (student) => {
           if (student && this.studentCode) {
             // Si es edición y se ha cargado el estudiante, actualizamos el formData
@@ -186,7 +202,12 @@ export class StudentForm extends BaseComponent {
           }
           return this.renderForm();
         },
-        error: (error) => html`<div class="error">Error al cargar datos: ${error.message}</div>`
+        error: (error) => html`
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Error al cargar datos: ${error.message}
+          </div>
+        `
       })}
     `;
   }
@@ -197,49 +218,72 @@ export class StudentForm extends BaseComponent {
   private renderForm() {
     return html`
       <form @submit=${this.submitForm}>
-        <div class="form-group">
-          <label for="codigo">Código *</label>
+        <div class="form-floating mb-3">
           <input
             type="text"
+            class="form-control ${this.errors.codigo ? 'is-invalid' : ''}"
             id="codigo"
             name="codigo"
+            placeholder="Ingrese el código"
             .value=${this.formData.codigo}
             @input=${this.handleInputChange}
             ?disabled=${Boolean(this.studentCode)}
           />
-          ${this.errors.codigo ? html`<div class="error-message">${this.errors.codigo}</div>` : ''}
+          <label for="codigo">Código del estudiante *</label>
+          ${this.errors.codigo ? html`
+            <div class="invalid-feedback">
+              ${this.errors.codigo}
+            </div>
+          ` : ''}
         </div>
         
-        <div class="form-group">
-          <label for="nombre">Nombre *</label>
+        <div class="form-floating mb-3">
           <input
             type="text"
+            class="form-control ${this.errors.nombre ? 'is-invalid' : ''}"
             id="nombre"
             name="nombre"
+            placeholder="Ingrese el nombre"
             .value=${this.formData.nombre}
             @input=${this.handleInputChange}
           />
-          ${this.errors.nombre ? html`<div class="error-message">${this.errors.nombre}</div>` : ''}
+          <label for="nombre">Nombre *</label>
+          ${this.errors.nombre ? html`
+            <div class="invalid-feedback">
+              ${this.errors.nombre}
+            </div>
+          ` : ''}
         </div>
         
-        <div class="form-group">
-          <label for="apellido">Apellido *</label>
+        <div class="form-floating mb-3">
           <input
             type="text"
+            class="form-control ${this.errors.apellido ? 'is-invalid' : ''}"
             id="apellido"
             name="apellido"
+            placeholder="Ingrese el apellido"
             .value=${this.formData.apellido}
             @input=${this.handleInputChange}
           />
-          ${this.errors.apellido ? html`<div class="error-message">${this.errors.apellido}</div>` : ''}
+          <label for="apellido">Apellido *</label>
+          ${this.errors.apellido ? html`
+            <div class="invalid-feedback">
+              ${this.errors.apellido}
+            </div>
+          ` : ''}
         </div>
         
-        <div class="form-group">
-          <label for="programaId">Programa *</label>
+        <div class="form-floating mb-3">
           ${this.loadProgramsTask.render({
-            pending: () => html`<select disabled><option>Cargando...</option></select>`,
+            pending: () => html`
+              <select class="form-select" disabled>
+                <option>Cargando programas...</option>
+              </select>
+              <label>Programa académico</label>
+            `,
             complete: (programs) => html`
               <select
+                class="form-select ${this.errors.programaId ? 'is-invalid' : ''}"
                 id="programaId"
                 name="programaId"
                 .value=${this.formData.programaId}
@@ -250,31 +294,58 @@ export class StudentForm extends BaseComponent {
                   <option value=${program.id}>${program.nombre}</option>
                 `)}
               </select>
+              <label for="programaId">Programa académico *</label>
+              ${this.errors.programaId ? html`
+                <div class="invalid-feedback">
+                  ${this.errors.programaId}
+                </div>
+              ` : ''}
             `,
-            error: (error) => html`<div class="error">Error: ${error.message}</div>`
+            error: (error) => html`
+              <div class="alert alert-danger my-2" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Error: ${error.message}
+              </div>
+            `
           })}
-          ${this.errors.programaId ? html`<div class="error-message">${this.errors.programaId}</div>` : ''}
+        </div>
+
+        <div class="form-floating mb-3">
+          <input
+            type="url"
+            class="form-control"
+            id="foto"
+            name="foto"
+            placeholder="URL de la foto (opcional)"
+            .value=${this.formData.foto || ''}
+            @input=${this.handleInputChange}
+          />
+          <label for="foto">URL de la foto (opcional)</label>
+          <div class="form-text mt-1">
+            <i class="fas fa-info-circle me-1"></i>
+            Si no se proporciona una URL, se dejará como valor nulo
+          </div>
         </div>
         
-        <div class="form-actions">
+        <div class="d-flex justify-content-end gap-2 mt-4">
           <button
             type="button"
-            class="button button-outline"
+            class="btn btn-secondary"
             @click=${this.cancel}
             ?disabled=${this.isSubmitting}
           >
-            Cancelar
+            <i class="fas fa-times me-1"></i> Cancelar
           </button>
           <button
             type="submit"
-            class="button button-primary"
+            class="btn btn-primary"
             ?disabled=${this.isSubmitting}
           >
             ${this.isSubmitting
-              ? 'Guardando...'
+              ? html`<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Guardando...`
               : this.studentCode
-                ? 'Actualizar'
-                : 'Crear'
+                ? html`<i class="fas fa-save me-1"></i> Actualizar`
+                : html`<i class="fas fa-plus-circle me-1"></i> Crear`
             }
           </button>
         </div>
@@ -282,7 +353,7 @@ export class StudentForm extends BaseComponent {
     `;
   }
 
-  static styles = css`
+  static override styles = css`
     form {
       width: 100%;
     }
