@@ -179,6 +179,4 @@ u-front-end/
 
 [MIT](LICENSE)
 
-## Contacto
 
-Para más información, contactar a [tu-email@dominio.com].
