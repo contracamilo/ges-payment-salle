@@ -1,0 +1,115 @@
+// Importación de Bootstrap
+@import "~bootstrap/scss/bootstrap";
+
+// Variables personalizadas
+:root {
+  --primary-color: #0b5ed7;
+  --primary-dark: #0a4fbf;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+  
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 1rem;
+  --spacing-4: 1.5rem;
+  --spacing-5: 2rem;
+  --spacing-6: 3rem;
+  
+  --border-radius: 0.25rem;
+  --border-radius-lg: 0.5rem;
+  
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+// Estilos personalizados globales
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f8fa;
+  color: #333;
+}
+
+// Clases de utilidad personalizadas
+.card {
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  padding: 1rem 1.25rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+// Mejoras a tablas
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
+
+th {
+  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+// Responsive para tablas
+@media screen and (max-width: 768px) {
+  table {
+    border: 0;
+  }
+  
+  table thead {
+    display: none;
+  }
+  
+  table tr {
+    margin-bottom: 1rem;
+    display: block;
+    border: 1px solid #ddd;
+  }
+  
+  table td {
+    display: block;
+    text-align: right;
+    border-bottom: 1px solid #ddd;
+    padding-left: 50%;
+    position: relative;
+  }
+  
+  table td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0.75rem;
+    font-weight: bold;
+    text-align: left;
+  }
+  
+  table td:last-child {
+    border-bottom: 0;
+  }
+} 

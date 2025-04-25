@@ -1,14 +1,15 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { Task } from '@lit-labs/task';
 import { Payment, PaymentStatus, PaymentType } from '../../../../domain/models/payment.model';
 import { PaymentFilters } from '../../../../domain/models/filters.model';
+import { BaseComponent } from '../../ui/components/base-component';
 
 /**
  * Página principal de pagos
  */
 @customElement('payments-page')
-export class PaymentsPage extends LitElement {
+export class PaymentsPage extends BaseComponent {
   @state() private filters: PaymentFilters = {};
   @state() private selectedPayment: Payment | null = null;
   @state() private isDetailModalOpen: boolean = false;
@@ -154,22 +155,48 @@ export class PaymentsPage extends LitElement {
   override render() {
     return html`
       <div class="payments-page">
-        <h1>Gestión de Pagos</h1>
-        <div class="card">
-          <div class="card-header">
-            <h2>Filtros</h2>
+        <div class="container">
+          <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+              <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-money-bill-wave text-primary me-2"></i>
+                Gestión de Pagos
+              </h1>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+              <!-- Aquí se pueden añadir botones de acción principal -->
+            </div>
           </div>
-          <div class="card-body">
-            <payment-filter @filter=${this.handleFilter}></payment-filter>
+          
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros de Búsqueda
+              </h5>
+            </div>
+            <div class="card-body">
+              <payment-filter @filter=${this.handleFilter}></payment-filter>
+            </div>
           </div>
-        </div>
-        
-        <div class="payments-list card">
-          <div class="card-header">
-            <h2>Lista de Pagos</h2>
-          </div>
-          <div class="card-body">
-            ${this.renderPaymentsTable()}
+          
+          <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Lista de Pagos
+              </h5>
+              <span class="badge bg-primary rounded-pill">
+                ${this.loadPaymentsTask.render({
+                  pending: () => html`...`,
+                  complete: (payments) => html`${payments.length}`,
+                  error: () => html`0`
+                })}
+              </span>
+            </div>
+            <div class="card-body">
+              ${this.renderPaymentsTable()}
+            </div>
           </div>
         </div>
         
@@ -185,44 +212,66 @@ export class PaymentsPage extends LitElement {
   private renderPaymentsTable() {
     return html`
       ${this.loadPaymentsTask.render({
-        pending: () => html`<div class="loading">Cargando pagos...</div>`,
+        pending: () => html`
+          <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        `,
         complete: (payments) => {
           if (payments.length === 0) {
-            return html`<div class="empty-state">No hay pagos registrados</div>`;
+            return html`
+              <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <p class="lead">No se encontraron pagos</p>
+                <p class="text-muted">Intenta cambiar los filtros de búsqueda</p>
+              </div>
+            `;
           }
           
           return html`
-            <div class="table-container">
-              <table>
-                <thead>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead class="table-light">
                   <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Estudiante</th>
-                    <th>Monto</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Estudiante</th>
+                    <th scope="col">Monto</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col" class="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${payments.map(payment => html`
                     <tr>
-                      <td data-label="ID">${payment.id}</td>
-                      <td data-label="Fecha">${new Date(payment.fecha).toLocaleDateString()}</td>
-                      <td data-label="Estudiante">${payment.estudiante.nombre} ${payment.estudiante.apellido}</td>
-                      <td data-label="Monto">$${payment.monto.toFixed(2)}</td>
-                      <td data-label="Tipo">${this.renderPaymentType(payment.type)}</td>
-                      <td data-label="Estado">${this.renderPaymentStatus(payment.status)}</td>
-                      <td data-label="Acciones" class="actions-cell">
-                        <button class="button button-primary button-sm" @click=${() => this.showPaymentDetail(payment)}>
-                          Ver Detalles
-                        </button>
-                        ${payment.status === PaymentStatus.PENDIENTE ? html`
-                          <button class="button button-secondary button-sm" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}>
-                            Aprobar
+                      <td>${payment.id}</td>
+                      <td>${new Date(payment.fecha).toLocaleDateString()}</td>
+                      <td>${payment.estudiante.nombre} ${payment.estudiante.apellido}</td>
+                      <td>$${payment.monto.toFixed(2)}</td>
+                      <td>${this.renderPaymentType(payment.type)}</td>
+                      <td>${this.renderPaymentStatus(payment.status)}</td>
+                      <td>
+                        <div class="d-flex justify-content-end gap-2">
+                          <button
+                            class="btn btn-sm btn-outline-primary"
+                            @click=${() => this.showPaymentDetail(payment)}
+                            title="Ver detalles"
+                          >
+                            <i class="fas fa-eye"></i>
                           </button>
-                        ` : ''}
+                          ${payment.status === PaymentStatus.PENDIENTE ? html`
+                            <button
+                              class="btn btn-sm btn-outline-success"
+                              @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
+                              title="Aprobar pago"
+                            >
+                              <i class="fas fa-check"></i>
+                            </button>
+                          ` : ''}
+                        </div>
                       </td>
                     </tr>
                   `)}
@@ -231,7 +280,12 @@ export class PaymentsPage extends LitElement {
             </div>
           `;
         },
-        error: (error) => html`<div class="error">Error al cargar pagos: ${error.message}</div>`
+        error: (error) => html`
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Error al cargar los pagos: ${error.message}
+          </div>
+        `
       })}
     `;
   }
@@ -243,81 +297,77 @@ export class PaymentsPage extends LitElement {
     if (!this.selectedPayment) return html``;
     
     return html`
-      <div class="modal-overlay">
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3>Detalles del Pago</h3>
-            <button class="close-button" @click=${this.closeDetailModal}>×</button>
-          </div>
-          <div class="modal-body">
-            <div class="payment-detail">
-              <div class="detail-row">
-                <span class="detail-label">ID:</span>
-                <span class="detail-value">${this.selectedPayment.id}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Fecha:</span>
-                <span class="detail-value">${new Date(this.selectedPayment.fecha).toLocaleDateString()}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Monto:</span>
-                <span class="detail-value">$${this.selectedPayment.monto.toFixed(2)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Tipo:</span>
-                <span class="detail-value">${this.renderPaymentType(this.selectedPayment.type)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Estado:</span>
-                <span class="detail-value">${this.renderPaymentStatus(this.selectedPayment.status)}</span>
+      <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">
+                <i class="fas fa-info-circle me-2"></i>
+                Detalles del Pago
+              </h5>
+              <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+            </div>
+            <div class="modal-body">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">ID del Pago</p>
+                  <p class="fw-bold">${this.selectedPayment.id}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Fecha</p>
+                  <p class="fw-bold">${new Date(this.selectedPayment.fecha).toLocaleDateString()}</p>
+                </div>
               </div>
               
-              <h4>Información del Estudiante</h4>
-              <div class="detail-row">
-                <span class="detail-label">Código:</span>
-                <span class="detail-value">${this.selectedPayment.estudiante.codigo}</span>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Estudiante</p>
+                  <p class="fw-bold">${this.selectedPayment.estudiante.nombre} ${this.selectedPayment.estudiante.apellido}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Código</p>
+                  <p class="fw-bold">${this.selectedPayment.estudiante.codigo}</p>
+                </div>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Nombre:</span>
-                <span class="detail-value">${this.selectedPayment.estudiante.nombre} ${this.selectedPayment.estudiante.apellido}</span>
+              
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Monto</p>
+                  <p class="fw-bold">$${this.selectedPayment.monto.toFixed(2)}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Tipo</p>
+                  <p class="fw-bold">${this.renderPaymentType(this.selectedPayment.type)}</p>
+                </div>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Programa:</span>
-                <span class="detail-value">${this.selectedPayment.estudiante.programaId}</span>
+              
+              <div class="row">
+                <div class="col-12">
+                  <p class="mb-1 text-muted">Estado</p>
+                  <p class="fw-bold">${this.renderPaymentStatus(this.selectedPayment.status)}</p>
+                </div>
               </div>
               
               ${this.selectedPayment.file ? html`
-                <div class="file-section">
-                  <h4>Comprobante de Pago</h4>
-                  <a href="${this.selectedPayment.file}" target="_blank" class="button button-outline">
-                    Ver Comprobante
-                  </a>
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <p class="mb-1 text-muted">Comprobante</p>
+                    <a href="${this.selectedPayment.file}" target="_blank" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-file-alt me-1"></i> Ver comprobante
+                    </a>
+                  </div>
                 </div>
               ` : ''}
-              
-              <div class="actions-section">
-                <h4>Acciones</h4>
-                <div class="action-buttons">
-                  ${this.selectedPayment.status === PaymentStatus.PENDIENTE ? html`
-                    <button class="button button-success" @click=${() => this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.PAGADO)}>
-                      Aprobar Pago
-                    </button>
-                    <button class="button button-danger" @click=${() => this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.RECHAZADO)}>
-                      Rechazar Pago
-                    </button>
-                  ` : ''}
-                  ${this.selectedPayment.status === PaymentStatus.PAGADO ? html`
-                    <button class="button button-warning" @click=${() => this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.PENDIENTE)}>
-                      Marcar como Pendiente
-                    </button>
-                  ` : ''}
-                  ${this.selectedPayment.status === PaymentStatus.RECHAZADO ? html`
-                    <button class="button button-primary" @click=${() => this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.PENDIENTE)}>
-                      Marcar como Pendiente
-                    </button>
-                  ` : ''}
-                </div>
-              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click=${this.closeDetailModal}>
+                <i class="fas fa-times me-1"></i> Cerrar
+              </button>
+              ${this.selectedPayment.status === PaymentStatus.PENDIENTE ? html`
+                <button type="button" class="btn btn-success" @click=${() => this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.PAGADO)}>
+                  <i class="fas fa-check me-1"></i> Aprobar Pago
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -326,14 +376,32 @@ export class PaymentsPage extends LitElement {
   }
 
   /**
-   * Renderiza una notificación
+   * Renderiza la notificación
    */
   private renderNotification() {
-    if (!this.notification) return '';
+    if (!this.notification) return html``;
+    
+    const typeClass = this.notification.type === 'success' ? 'alert-success' : 
+                      this.notification.type === 'error' ? 'alert-danger' : 
+                      'alert-warning';
+    
+    const icon = this.notification.type === 'success' ? 'fas fa-check-circle' : 
+                 this.notification.type === 'error' ? 'fas fa-exclamation-circle' : 
+                 'fas fa-exclamation-triangle';
     
     return html`
-      <div class="notification ${this.notification.type}">
-        ${this.notification.message}
+      <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header ${typeClass} text-white">
+            <i class="${icon} me-2"></i>
+            <strong class="me-auto">Notificación</strong>
+            <button type="button" class="btn-close btn-close-white" 
+                    @click=${() => this.notification = null}></button>
+          </div>
+          <div class="toast-body">
+            ${this.notification.message}
+          </div>
+        </div>
       </div>
     `;
   }
@@ -566,4 +634,9 @@ export class PaymentsPage extends LitElement {
       }
     }
   `;
+
+  // Desactivamos el shadow DOM para permitir que los estilos globales de Bootstrap se apliquen
+  override createRenderRoot() {
+    return this;
+  }
 } 

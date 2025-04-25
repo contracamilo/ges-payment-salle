@@ -1,14 +1,15 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { Task } from '@lit-labs/task';
 import { Student } from '../../../../domain/models/student.model';
 import { StudentFilters } from '../../../../domain/models/filters.model';
+import { BaseComponent } from '../../ui/components/base-component';
 
 /**
  * Página principal de estudiantes
  */
 @customElement('students-page')
-export class StudentsPage extends LitElement {
+export class StudentsPage extends BaseComponent {
   @state() private filters: StudentFilters = {};
   @state() private isCreateModalOpen: boolean = false;
   @state() private editingStudentCode: string | null = null;
@@ -23,6 +24,18 @@ export class StudentsPage extends LitElement {
     this,
     async () => {
       try {
+        // Verificamos que los servicios estén disponibles
+        if (!window.services || !window.services.studentUseCase) {
+          console.error('Los servicios no están disponibles. Reiniciando servicios...');
+          if (typeof window.initializeServices === 'function') {
+            window.initializeServices();
+          }
+          // Si aún no están disponibles, lanzamos un error
+          if (!window.services || !window.services.studentUseCase) {
+            throw new Error('Los servicios no están disponibles.');
+          }
+        }
+
         const studentUseCase = window.services.studentUseCase;
         let result;
         
@@ -161,32 +174,52 @@ export class StudentsPage extends LitElement {
   }
 
   override render() {
-    console.log('StudentsPage - Renderizando');
     return html`
       <div class="students-page">
-        <h1>Gestión de Estudiantes</h1>
-        
-        <div class="card">
-          <div class="card-header">
-            <h2>Filtros</h2>
+        <div class="container">
+          <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+              <h1 class="display-5 fw-bold mb-0">
+                <i class="fas fa-users text-primary me-2"></i>
+                Gestión de Estudiantes
+              </h1>
+            </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+              <button class="btn btn-primary" @click=${this.openCreateForm}>
+                <i class="fas fa-plus-circle me-1"></i> Nuevo Estudiante
+              </button>
+            </div>
           </div>
-          <div class="card-body">
-            <student-filter @filter=${this.handleFilter}></student-filter>
+          
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filtros de Búsqueda
+              </h5>
+            </div>
+            <div class="card-body">
+              <student-filter @filter=${this.handleFilter}></student-filter>
+            </div>
           </div>
-        </div>
-        
-        <div class="actions">
-          <button class="button button-primary" @click=${this.openCreateForm}>
-            Nuevo Estudiante
-          </button>
-        </div>
-        
-        <div class="students-list card">
-          <div class="card-header">
-            <h2>Lista de Estudiantes</h2>
-          </div>
-          <div class="card-body">
-            ${this.renderStudentsTable()}
+          
+          <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Lista de Estudiantes
+              </h5>
+              <span class="badge bg-primary rounded-pill">
+                ${this.loadStudentsTask.render({
+                  pending: () => html`...`,
+                  complete: (students) => html`${students.length}`,
+                  error: () => html`0`
+                })}
+              </span>
+            </div>
+            <div class="card-body">
+              ${this.renderStudentsTable()}
+            </div>
           </div>
         </div>
         
@@ -203,42 +236,67 @@ export class StudentsPage extends LitElement {
   private renderStudentsTable() {
     return html`
       ${this.loadStudentsTask.render({
-        pending: () => html`<div class="loading">Cargando estudiantes...</div>`,
+        pending: () => html`
+          <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        `,
         complete: (students) => {
           if (students.length === 0) {
-            return html`<div class="empty-state">No hay estudiantes registrados</div>`;
+            return html`
+              <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <p class="lead">No se encontraron estudiantes</p>
+                <p class="text-muted">Intenta cambiar los filtros o agregar un nuevo estudiante</p>
+              </div>
+            `;
           }
           
           return html`
-            <div class="table-container">
-              <table>
-                <thead>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead class="table-light">
                   <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Programa</th>
-                    <th>Acciones</th>
+                    <th scope="col">Código</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Apellido</th>
+                    <th scope="col">Programa</th>
+                    <th scope="col" class="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${students.map(student => html`
                     <tr>
-                      <td data-label="Código">${student.codigo}</td>
-                      <td data-label="Nombre">${student.nombre}</td>
-                      <td data-label="Apellido">${student.apellido}</td>
-                      <td data-label="Programa">${student.programaId}</td>
-                      <td data-label="Acciones" class="actions-cell">
-                        <button class="icon-button" title="Editar" @click=${() => this.openEditForm(student.codigo)}>
-                          ✏️
-                        </button>
-                        <button class="icon-button" title="Eliminar" @click=${() => this.confirmDelete(student)}>
-                          🗑️
-                        </button>
-                        <button class="button button-primary button-sm" 
-                                @click=${() => this.navigateToStudentPayments(student.codigo)}>
-                          Ver Pagos
-                        </button>
+                      <td>${student.codigo}</td>
+                      <td>${student.nombre}</td>
+                      <td>${student.apellido}</td>
+                      <td>${student.programaId}</td>
+                      <td>
+                        <div class="d-flex justify-content-end gap-2">
+                          <button
+                            class="btn btn-sm btn-outline-primary"
+                            @click=${() => this.navigateToStudentPayments(student.codigo)}
+                            title="Ver pagos"
+                          >
+                            <i class="fas fa-money-bill-wave"></i>
+                          </button>
+                          <button
+                            class="btn btn-sm btn-outline-secondary"
+                            @click=${() => this.openEditForm(student.codigo)}
+                            title="Editar"
+                          >
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button
+                            class="btn btn-sm btn-outline-danger"
+                            @click=${() => this.confirmDelete(student)}
+                            title="Eliminar"
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   `)}
@@ -247,13 +305,18 @@ export class StudentsPage extends LitElement {
             </div>
           `;
         },
-        error: (error) => html`<div class="error">Error al cargar estudiantes: ${error.message}</div>`
+        error: (error) => html`
+          <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Error al cargar los estudiantes: ${error.message}
+          </div>
+        `
       })}
     `;
   }
 
   /**
-   * Navega a la vista de pagos de un estudiante
+   * Navega a la página de pagos del estudiante
    */
   private navigateToStudentPayments(codigo: string) {
     console.log('StudentsPage - Navegando a pagos del estudiante:', codigo);
@@ -296,22 +359,28 @@ export class StudentsPage extends LitElement {
     if (!this.selectedStudent) return html``;
     
     return html`
-      <div class="modal-overlay">
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3>Confirmar Eliminación</h3>
-          </div>
-          <div class="modal-body">
-            <p>¿Estás seguro de que quieres eliminar al estudiante ${this.selectedStudent.nombre} ${this.selectedStudent.apellido} (${this.selectedStudent.codigo})?</p>
-            <p class="text-danger">Esta acción no se puede deshacer.</p>
-          </div>
-          <div class="modal-footer">
-            <button class="button button-outline" @click=${this.closeDeleteDialog}>
-              Cancelar
-            </button>
-            <button class="button button-danger" @click=${this.deleteStudent}>
-              Eliminar
-            </button>
+      <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Confirmar eliminación
+              </h5>
+              <button type="button" class="btn-close btn-close-white" @click=${this.closeDeleteDialog}></button>
+            </div>
+            <div class="modal-body">
+              <p>¿Está seguro que desea eliminar al estudiante <strong>${this.selectedStudent.nombre} ${this.selectedStudent.apellido}</strong> con código <strong>${this.selectedStudent.codigo}</strong>?</p>
+              <p class="text-danger mb-0"><small>Esta acción no se puede deshacer.</small></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click=${this.closeDeleteDialog}>
+                <i class="fas fa-times me-1"></i> Cancelar
+              </button>
+              <button type="button" class="btn btn-danger" @click=${this.deleteStudent}>
+                <i class="fas fa-trash me-1"></i> Eliminar
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -319,19 +388,37 @@ export class StudentsPage extends LitElement {
   }
 
   /**
-   * Renderiza una notificación
+   * Renderiza la notificación
    */
   private renderNotification() {
-    if (!this.notification) return '';
+    if (!this.notification) return html``;
+    
+    const typeClass = this.notification.type === 'success' ? 'alert-success' : 
+                      this.notification.type === 'error' ? 'alert-danger' : 
+                      'alert-warning';
+    
+    const icon = this.notification.type === 'success' ? 'fas fa-check-circle' : 
+                 this.notification.type === 'error' ? 'fas fa-exclamation-circle' : 
+                 'fas fa-exclamation-triangle';
     
     return html`
-      <div class="notification ${this.notification.type}">
-        ${this.notification.message}
+      <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="toast-header ${typeClass} text-white">
+            <i class="${icon} me-2"></i>
+            <strong class="me-auto">Notificación</strong>
+            <button type="button" class="btn-close btn-close-white" 
+                    @click=${() => this.notification = null}></button>
+          </div>
+          <div class="toast-body">
+            ${this.notification.message}
+          </div>
+        </div>
       </div>
     `;
   }
 
-  static styles = css`
+  static override styles = css`
     :host {
       display: block;
     }

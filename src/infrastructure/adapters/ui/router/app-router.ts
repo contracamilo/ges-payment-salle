@@ -1,6 +1,7 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { html } from 'lit';
+import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
+import { BaseComponent } from '../components/base-component';
 
 /**
  * Interfaz para definir rutas
@@ -15,17 +16,25 @@ export interface Route {
 }
 
 /**
- * Componente de enrutador principal de la aplicación
+ * Definiciones de rutas de la aplicación
+ */
+const routes = [
+  { path: '/', redirect: '/estudiantes' },
+  { path: '/estudiantes', component: 'students-page' },
+  { path: '/pagos', component: 'payments-page' },
+  { path: '/estudiantes/:codigo/pagos', component: 'student-payments-page' },
+  { path: '(.*)', component: 'not-found-page' }
+];
+
+/**
+ * Componente enrutador principal de la aplicación
  */
 @customElement('app-router')
-export class AppRouter extends LitElement {
-  private router?: Router;
-  @state() private transitionActive: boolean = false;
-
-  constructor() {
-    super();
-    console.log('AppRouter constructor');
-  }
+export class AppRouter extends BaseComponent {
+  /**
+   * Router de Vaadin
+   */
+  private router?: any;
 
   override connectedCallback() {
     super.connectedCallback();
@@ -33,102 +42,27 @@ export class AppRouter extends LitElement {
   }
 
   override firstUpdated() {
-    console.log('AppRouter firstUpdated, inicializando router');
-    // Inicializamos el router después de que el componente se haya renderizado
-    const outlet = this.shadowRoot!.querySelector('#outlet');
-    if (outlet) {
-      console.log('Outlet encontrado, configurando rutas');
-      this.router = new Router(outlet);
-
-      // Definir las rutas de la aplicación
-      this.router.setRoutes([
-        { 
-          path: '/',
-          component: 'students-page',
-          action: () => this.setDocumentTitle('Estudiantes')
-        },
-        { 
-          path: '/estudiantes',
-          component: 'students-page',
-          action: () => this.setDocumentTitle('Estudiantes')
-        },
-        { 
-          path: '/pagos',
-          component: 'payments-page',
-          action: () => this.setDocumentTitle('Pagos')
-        },
-        { 
-          path: '/estudiantes/:codigo/pagos',
-          component: 'student-payments-page',
-          action: (context) => this.setDocumentTitle(`Pagos del Estudiante ${context.params.codigo}`)
-        },
-        { 
-          path: '(.*)',
-          component: 'not-found-page',
-          action: () => this.setDocumentTitle('Página no encontrada')
-        }
-      ]);
-
-      // Manejar transición de página
-      this.handlePageTransitions();
-
-      console.log('Rutas configuradas:', this.router.getRoutes());
-    } else {
-      console.error('No se encontró el outlet para el router');
-    }
-  }
-
-  /**
-   * Maneja las transiciones entre páginas
-   */
-  private handlePageTransitions() {
-    // Añadimos clase en el inicio de la navegación
-    window.addEventListener('vaadin-router-location-changed', () => {
-      this.transitionActive = true;
-    });
+    console.log('AppRouter firstUpdated');
     
-    // Quitamos clase después de un tiempo
-    window.addEventListener('vaadin-router-location-changed', () => {
-      setTimeout(() => {
-        this.transitionActive = false;
-      }, 100);
-    });
-  }
-
-  /**
-   * Establece el título del documento
-   */
-  private setDocumentTitle(pageTitle: string) {
-    document.title = pageTitle ? `${pageTitle} | Sistema de Gestión de Pagos Educativos` : 'Sistema de Gestión de Pagos Educativos';
-  }
-
-  /**
-   * Navega a una URL específica
-   * @param url URL a la que navegar
-   */
-  navigate(url: string) {
-    console.log('Navegando a:', url);
-    Router.go(url);
+    // Buscamos el outlet después del primer render
+    setTimeout(() => {
+      const outlet = this.querySelector('#outlet');
+      console.log('Outlet element:', outlet);
+      
+      if (outlet) {
+        console.log('Router outlet encontrado, inicializando router');
+        this.router = new Router(outlet);
+        this.router.setRoutes(routes);
+      } else {
+        console.error('Router outlet not found');
+      }
+    }, 0);
   }
 
   override render() {
     console.log('AppRouter rendering');
     return html`
-      <div class="router-outlet ${this.transitionActive ? 'transition' : ''}">
-        <div id="outlet"></div>
-      </div>
+      <div id="outlet" style="width: 100%; min-height: 100%;"></div>
     `;
   }
-
-  static override styles = css`
-    .router-outlet {
-      height: 100%;
-      opacity: 1;
-      transition: opacity 0.2s ease-in-out;
-    }
-    
-    .router-outlet.transition {
-      opacity: 0.7;
-    }
-  `;
 }

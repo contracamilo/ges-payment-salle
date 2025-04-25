@@ -1,0 +1,224 @@
+/* Importando Bootstrap CSS */
+@import '../../node_modules/bootstrap/dist/css/bootstrap.min.css';
+
+/* Variables personalizadas */
+:root {
+  --primary-color: #0b5ed7;
+  --primary-dark: #0a4fbf;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+  
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 1rem;
+  --spacing-4: 1.5rem;
+  --spacing-5: 2rem;
+  --spacing-6: 3rem;
+  
+  --border-radius: 0.25rem;
+  --border-radius-lg: 0.5rem;
+  
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos personalizados globales */
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f8fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Asegurar que los componentes web funcionen correctamente */
+app-root, app-router, app-header, students-page, payments-page,
+student-payments-page, student-filter, payment-filter, student-form,
+student-list, not-found-page {
+  display: block;
+  width: 100%;
+}
+
+/* Encabezado y navegación */
+header.p-3.bg-dark {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.form-control-dark {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.form-control-dark::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-control-dark:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+}
+
+/* Acordeones y modales */
+.accordion-button:not(.collapsed) {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Forms y inputs */
+.form-floating>.form-control:focus~label, 
+.form-floating>.form-control:not(:placeholder-shown)~label {
+  color: var(--primary-color);
+}
+
+.form-floating>.form-control:focus, 
+.form-floating>.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(11, 94, 215, 0.25);
+}
+
+/* Fix para inputs y botones */
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+}
+
+/* Estilos personalizados para tablas */
+.table-responsive {
+  border-radius: var(--border-radius);
+}
+
+.table {
+  margin-bottom: 0;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background-color: rgba(0, 0, 0, 0.03);
+  font-weight: 600;
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
+
+.table td {
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Estilos para las cards */
+.card {
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.3s ease-in-out;
+  margin-bottom: 1.5rem;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 1rem 1.25rem;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Estilos para botones */
+.btn {
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: var(--font-size-sm);
+}
+
+/* Estilos para notificaciones */
+.toast-container {
+  z-index: 1100;
+}
+
+.toast {
+  box-shadow: var(--shadow-md);
+  opacity: 1 !important;
+}
+
+/* Responsive para tablas */
+@media screen and (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .table.table-mobile-stacked thead {
+    display: none;
+  }
+  
+  .table.table-mobile-stacked tr {
+    margin-bottom: 1rem;
+    display: block;
+    border: 1px solid #ddd;
+  }
+  
+  .table.table-mobile-stacked td {
+    display: block;
+    text-align: right;
+    border-bottom: 1px solid #ddd;
+    padding-left: 50%;
+    position: relative;
+  }
+  
+  .table.table-mobile-stacked td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0.75rem;
+    font-weight: bold;
+    text-align: left;
+  }
+  
+  .table.table-mobile-stacked td:last-child {
+    border-bottom: 0;
+  }
+} 

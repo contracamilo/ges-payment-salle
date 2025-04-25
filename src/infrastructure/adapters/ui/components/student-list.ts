@@ -1,18 +1,19 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { html, css } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 import { Task } from '@lit-labs/task';
 import { Router } from '@vaadin/router';
 import { Student } from '../../../../domain/models/student.model';
 import { StudentFilters } from '../../../../domain/models/filters.model';
+import { BaseComponent } from './base-component';
 
 /**
  * Componente que muestra una lista de estudiantes
  */
 @customElement('student-list')
-export class StudentList extends LitElement {
-  @state() private filters: StudentFilters = {};
-  @state() private selectedStudent: Student | null = null;
-  @state() private isDeleteDialogOpen: boolean = false;
+export class StudentList extends BaseComponent {
+  @property() private filters: StudentFilters = {};
+  @property() private selectedStudent: Student | null = null;
+  @property() private isDeleteDialogOpen: boolean = false;
 
   /**
    * Task para cargar los estudiantes

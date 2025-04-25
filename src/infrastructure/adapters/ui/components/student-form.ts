@@ -1,13 +1,14 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Task } from '@lit-labs/task';
 import { Student, CreateStudentDto } from '../../../../domain/models/student.model';
+import { BaseComponent } from './base-component';
 
 /**
  * Formulario para la creación y edición de estudiantes
  */
 @customElement('student-form')
-export class StudentForm extends LitElement {
+export class StudentForm extends BaseComponent {
   /**
    * Código del estudiante a editar (null si es un nuevo estudiante)
    */

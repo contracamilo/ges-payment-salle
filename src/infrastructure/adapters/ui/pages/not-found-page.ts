@@ -1,12 +1,13 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
+import { BaseComponent } from '../../ui/components/base-component';
 
 /**
  * Página para rutas no encontradas (404)
  */
 @customElement('not-found-page')
-export class NotFoundPage extends LitElement {
+export class NotFoundPage extends BaseComponent {
   /**
    * Navega a la página principal
    */

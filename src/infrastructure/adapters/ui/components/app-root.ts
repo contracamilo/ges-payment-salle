@@ -1,15 +1,18 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
+import { BaseComponent } from './base-component';
 
 // Importamos otros componentes
 import '../components/app-header';
 import '../router/app-router';
 
 /**
- * Componente raíz de la aplicación
+ * Componente raíz de la aplicación que define la estructura general
+ * Este componente es el punto de entrada principal para el enrutamiento
+ * y la disposición de componentes de la aplicación
  */
 @customElement('app-root')
-export class AppRoot extends LitElement {
+export class AppRoot extends BaseComponent {
   constructor() {
     super();
     console.log('AppRoot constructor');
@@ -46,17 +49,17 @@ export class AppRoot extends LitElement {
   static override styles = css`
     :host {
       display: block;
+      min-height: 100vh;
     }
     
     .app-container {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
     
     .main-content {
       flex: 1;
-      padding: var(--spacing-6) 0;
+      padding: 20px 0;
     }
     
     .container {

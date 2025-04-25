@@ -1,5 +1,6 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { BaseComponent } from '../../ui/components/base-component';
 import { Task } from '@lit-labs/task';
 import { Router } from '@vaadin/router';
 import { PaymentStatus, PaymentType } from '../../../../domain/models/payment.model';
@@ -10,7 +11,7 @@ import { PropertyValues } from 'lit';
  * Página que muestra los pagos de un estudiante específico
  */
 @customElement('student-payments-page')
-export class StudentPaymentsPage extends LitElement {
+export class StudentPaymentsPage extends BaseComponent {
   @property({ type: String }) codigo: string = '';
   @property({ type: String }) studentCode: string = '';
   @state() private student: Student | null = null;

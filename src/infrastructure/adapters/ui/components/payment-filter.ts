@@ -1,13 +1,14 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { PaymentStatus, PaymentType } from '../../../../domain/models/payment.model';
 import { PaymentFilters } from '../../../../domain/models/filters.model';
+import { PaymentStatus, PaymentType } from '../../../../domain/models/payment.model';
+import { BaseComponent } from './base-component';
 
 /**
  * Componente para filtrar la lista de pagos
  */
 @customElement('payment-filter')
-export class PaymentFilter extends LitElement {
+export class PaymentFilter extends BaseComponent {
   @state() private estudiante_codigo: string = '';
   @state() private fechaInicio: string = '';
   @state() private fechaFin: string = '';
@@ -107,86 +108,101 @@ export class PaymentFilter extends LitElement {
 
   override render() {
     return html`
-      <div class="filter-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="estudiante_codigo">Código de estudiante</label>
-            <input
-              type="text"
-              id="estudiante_codigo"
-              placeholder="Buscar por código"
-              .value=${this.estudiante_codigo}
-              @input=${this.handleEstudianteCodigoChange}
-            />
+      <div class="container-fluid p-0">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              <input
+                type="text"
+                class="form-control border border-secondary"
+                id="estudiante_codigo"
+                placeholder="Buscar por código"
+                .value=${this.estudiante_codigo}
+                @input=${this.handleEstudianteCodigoChange}
+              />
+              <label for="estudiante_codigo">Código del estudiante</label>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="status">Estado del pago</label>
-            <select
-              id="status"
-              .value=${this.status}
-              @change=${this.handleStatusChange}
-            >
-              <option value="">Todos los estados</option>
-              <option value=${PaymentStatus.CREADO}>Creado</option>
-              <option value=${PaymentStatus.PENDIENTE}>Pendiente</option>
-              <option value=${PaymentStatus.PAGADO}>Pagado</option>
-              <option value=${PaymentStatus.RECHAZADO}>Rechazado</option>
-              <option value=${PaymentStatus.CANCELADO}>Cancelado</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="type">Tipo de pago</label>
-            <select
-              id="type"
-              .value=${this.type}
-              @change=${this.handleTypeChange}
-            >
-              <option value="">Todos los tipos</option>
-              <option value=${PaymentType.EFECTIVO}>Efectivo</option>
-              <option value=${PaymentType.TRANSFERENCIA}>Transferencia</option>
-              <option value=${PaymentType.CHEQUE}>Cheque</option>
-              <option value=${PaymentType.TARJETA}>Tarjeta</option>
-              <option value=${PaymentType.OTRO}>Otro</option>
-            </select>
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              <select
+                class="form-select border border-secondary"
+                id="status"
+                .value=${this.status}
+                @change=${this.handleStatusChange}
+              >
+                <option value="">Todos los estados</option>
+                <option value=${PaymentStatus.CREADO}>Creado</option>
+                <option value=${PaymentStatus.PENDIENTE}>Pendiente</option>
+                <option value=${PaymentStatus.PAGADO}>Pagado</option>
+                <option value=${PaymentStatus.RECHAZADO}>Rechazado</option>
+                <option value=${PaymentStatus.CANCELADO}>Cancelado</option>
+              </select>
+              <label for="status">Estado del pago</label>
+            </div>
           </div>
         </div>
         
-        <div class="form-row">
-          <div class="form-group">
-            <label for="fechaInicio">Fecha desde</label>
-            <input
-              type="date"
-              id="fechaInicio"
-              .value=${this.fechaInicio}
-              @input=${this.handleFechaInicioChange}
-            />
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <div class="form-floating mb-3">
+              <select
+                class="form-select border border-secondary"
+                id="type"
+                .value=${this.type}
+                @change=${this.handleTypeChange}
+              >
+                <option value="">Todos los tipos</option>
+                <option value=${PaymentType.EFECTIVO}>Efectivo</option>
+                <option value=${PaymentType.TRANSFERENCIA}>Transferencia</option>
+                <option value=${PaymentType.CHEQUE}>Cheque</option>
+                <option value=${PaymentType.TARJETA}>Tarjeta</option>
+                <option value=${PaymentType.OTRO}>Otro</option>
+              </select>
+              <label for="type">Tipo de pago</label>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label for="fechaFin">Fecha hasta</label>
-            <input
-              type="date"
-              id="fechaFin"
-              .value=${this.fechaFin}
-              @input=${this.handleFechaFinChange}
-            />
+          <div class="col-md-4">
+            <div class="form-floating mb-3">
+              <input
+                type="date"
+                class="form-control border border-secondary"
+                id="fechaInicio"
+                .value=${this.fechaInicio}
+                @input=${this.handleFechaInicioChange}
+              />
+              <label for="fechaInicio">Fecha desde</label>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="form-floating mb-3">
+              <input
+                type="date"
+                class="form-control border border-secondary"
+                id="fechaFin"
+                .value=${this.fechaFin}
+                @input=${this.handleFechaFinChange}
+              />
+              <label for="fechaFin">Fecha hasta</label>
+            </div>
           </div>
         </div>
         
-        <div class="filter-actions">
+        <div class="d-flex justify-content-end gap-2">
           <button
-            class="button button-outline"
+            class="btn btn-outline-secondary shadow-sm"
             @click=${this.clearFilters}
           >
-            Limpiar
+            <i class="fas fa-eraser me-1"></i> Limpiar
           </button>
           <button
-            class="button button-primary"
+            class="btn btn-primary shadow-sm"
             @click=${this.applyFilters}
           >
-            Aplicar Filtros
+            <i class="fas fa-filter me-1"></i> Aplicar Filtros
           </button>
         </div>
       </div>
@@ -194,33 +210,8 @@ export class PaymentFilter extends LitElement {
   }
 
   static override styles = css`
-    .filter-form {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-4);
-    }
-    
-    .form-row {
-      display: flex;
-      gap: var(--spacing-4);
-      flex-wrap: wrap;
-    }
-    
-    .form-group {
-      flex: 1;
-      min-width: 250px;
-    }
-    
-    .filter-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: var(--spacing-2);
-    }
-    
-    @media (max-width: 768px) {
-      .form-group {
-        flex: 1 0 100%;
-      }
+    :host {
+      display: block;
     }
   `;
 } 
