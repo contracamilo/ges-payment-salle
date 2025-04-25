@@ -1,4 +1,10 @@
-import { Payment, CreatePaymentDto, UpdatePaymentStatusDto, PaymentStatus, PaymentType } from '../../domain/models/payment.model';
+import {
+  Payment,
+  CreatePaymentDto,
+  UpdatePaymentStatusDto,
+  PaymentStatus,
+  PaymentType,
+} from '../../domain/models/payment.model';
 import { PaymentFilters } from '../../domain/models/filters.model';
 import { PaymentRepository } from '../ports/payment.repository';
 
@@ -81,16 +87,18 @@ export class PaymentUseCase {
    */
   async createPayment(payment: CreatePaymentDto): Promise<Payment> {
     console.log('PaymentUseCase - Creando nuevo pago con datos:', payment);
-    
+
     // Validar que el DTO incluya la información necesaria
     if (!payment.estudianteId) {
       throw new Error('El ID del estudiante es requerido para crear un pago');
     }
-    
+
     if (!payment.estudiante) {
-      console.warn('PaymentUseCase - Advertencia: No se incluye información completa del estudiante');
+      console.warn(
+        'PaymentUseCase - Advertencia: No se incluye información completa del estudiante'
+      );
     }
-    
+
     try {
       const result = await this.repository.create(payment);
       console.log('PaymentUseCase - Pago creado exitosamente:', result);
@@ -115,4 +123,4 @@ export class PaymentUseCase {
     }
     return this.repository.updateStatus(pagoId, statusData);
   }
-} 
+}

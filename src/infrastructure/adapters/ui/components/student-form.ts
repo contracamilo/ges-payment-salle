@@ -22,7 +22,7 @@ export class StudentForm extends BaseComponent {
     nombre: '',
     apellido: '',
     programaId: '',
-    foto: null
+    foto: null,
   };
 
   /**
@@ -59,7 +59,7 @@ export class StudentForm extends BaseComponent {
         { id: 'LTA1', nombre: 'Licenciatura en Tecnología' },
         { id: 'ING1', nombre: 'Ingeniería de Software' },
         { id: 'ADM1', nombre: 'Administración de Empresas' },
-        { id: 'MED1', nombre: 'Medicina' }
+        { id: 'MED1', nombre: 'Medicina' },
       ];
     },
     () => []
@@ -77,12 +77,12 @@ export class StudentForm extends BaseComponent {
     if (field === 'foto' && value.trim() === '') {
       this.formData = {
         ...this.formData,
-        [field]: null
+        [field]: null,
       };
     } else {
       this.formData = {
         ...this.formData,
-        [field]: value
+        [field]: value,
       };
     }
 
@@ -90,7 +90,7 @@ export class StudentForm extends BaseComponent {
     if (this.errors[field]) {
       this.errors = {
         ...this.errors,
-        [field]: ''
+        [field]: '',
       };
     }
   }
@@ -126,7 +126,7 @@ export class StudentForm extends BaseComponent {
    */
   async submitForm(e: Event) {
     e.preventDefault();
-    
+
     if (!this.validateForm()) {
       return;
     }
@@ -135,34 +135,37 @@ export class StudentForm extends BaseComponent {
     try {
       if (this.studentCode) {
         // Actualizar estudiante existente
-        await window.services.studentUseCase.updateStudent(
-          this.studentCode,
-          this.formData
+        await window.services.studentUseCase.updateStudent(this.studentCode, this.formData);
+
+        this.dispatchEvent(
+          new CustomEvent('submit-success', {
+            detail: {
+              message: 'Estudiante actualizado correctamente',
+            },
+          })
         );
-        
-        this.dispatchEvent(new CustomEvent('submit-success', {
-          detail: {
-            message: 'Estudiante actualizado correctamente'
-          }
-        }));
       } else {
         // Crear nuevo estudiante
         await window.services.studentUseCase.createStudent(this.formData);
-        
-        this.dispatchEvent(new CustomEvent('submit-success', {
-          detail: {
-            message: 'Estudiante creado correctamente'
-          }
-        }));
+
+        this.dispatchEvent(
+          new CustomEvent('submit-success', {
+            detail: {
+              message: 'Estudiante creado correctamente',
+            },
+          })
+        );
       }
     } catch (error) {
       console.error('Error al guardar estudiante:', error);
-      
-      this.dispatchEvent(new CustomEvent('submit-error', {
-        detail: {
-          message: 'Error al guardar el estudiante'
-        }
-      }));
+
+      this.dispatchEvent(
+        new CustomEvent('submit-error', {
+          detail: {
+            message: 'Error al guardar el estudiante',
+          },
+        })
+      );
     } finally {
       this.isSubmitting = false;
     }
@@ -178,16 +181,17 @@ export class StudentForm extends BaseComponent {
   override render() {
     return html`
       ${this.loadStudentTask.render({
-        pending: () => this.studentCode 
-          ? html`
-            <div class="d-flex justify-content-center py-4">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
-            </div>
-          ` 
-          : this.renderForm(),
-        complete: (student) => {
+        pending: () =>
+          this.studentCode
+            ? html`
+                <div class="d-flex justify-content-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                  </div>
+                </div>
+              `
+            : this.renderForm(),
+        complete: student => {
           if (student && this.studentCode) {
             // Si es edición y se ha cargado el estudiante, actualizamos el formData
             if (this.formData.codigo === '') {
@@ -196,18 +200,18 @@ export class StudentForm extends BaseComponent {
                 nombre: student.nombre,
                 apellido: student.apellido,
                 programaId: student.programaId,
-                foto: student.foto
+                foto: student.foto,
               };
             }
           }
           return this.renderForm();
         },
-        error: (error) => html`
+        error: error => html`
           <div class="alert alert-danger" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
             Error al cargar datos: ${error.message}
           </div>
-        `
+        `,
       })}
     `;
   }
@@ -230,13 +234,11 @@ export class StudentForm extends BaseComponent {
             ?disabled=${Boolean(this.studentCode)}
           />
           <label for="codigo">Código del estudiante *</label>
-          ${this.errors.codigo ? html`
-            <div class="invalid-feedback">
-              ${this.errors.codigo}
-            </div>
-          ` : ''}
+          ${this.errors.codigo
+            ? html` <div class="invalid-feedback">${this.errors.codigo}</div> `
+            : ''}
         </div>
-        
+
         <div class="form-floating mb-3">
           <input
             type="text"
@@ -248,13 +250,11 @@ export class StudentForm extends BaseComponent {
             @input=${this.handleInputChange}
           />
           <label for="nombre">Nombre *</label>
-          ${this.errors.nombre ? html`
-            <div class="invalid-feedback">
-              ${this.errors.nombre}
-            </div>
-          ` : ''}
+          ${this.errors.nombre
+            ? html` <div class="invalid-feedback">${this.errors.nombre}</div> `
+            : ''}
         </div>
-        
+
         <div class="form-floating mb-3">
           <input
             type="text"
@@ -266,13 +266,11 @@ export class StudentForm extends BaseComponent {
             @input=${this.handleInputChange}
           />
           <label for="apellido">Apellido *</label>
-          ${this.errors.apellido ? html`
-            <div class="invalid-feedback">
-              ${this.errors.apellido}
-            </div>
-          ` : ''}
+          ${this.errors.apellido
+            ? html` <div class="invalid-feedback">${this.errors.apellido}</div> `
+            : ''}
         </div>
-        
+
         <div class="form-floating mb-3">
           ${this.loadProgramsTask.render({
             pending: () => html`
@@ -281,7 +279,7 @@ export class StudentForm extends BaseComponent {
               </select>
               <label>Programa académico</label>
             `,
-            complete: (programs) => html`
+            complete: programs => html`
               <select
                 class="form-select ${this.errors.programaId ? 'is-invalid' : ''}"
                 id="programaId"
@@ -290,23 +288,21 @@ export class StudentForm extends BaseComponent {
                 @change=${this.handleInputChange}
               >
                 <option value="">Seleccione un programa</option>
-                ${programs.map(program => html`
-                  <option value=${program.id}>${program.nombre}</option>
-                `)}
+                ${programs.map(
+                  program => html` <option value=${program.id}>${program.nombre}</option> `
+                )}
               </select>
               <label for="programaId">Programa académico *</label>
-              ${this.errors.programaId ? html`
-                <div class="invalid-feedback">
-                  ${this.errors.programaId}
-                </div>
-              ` : ''}
+              ${this.errors.programaId
+                ? html` <div class="invalid-feedback">${this.errors.programaId}</div> `
+                : ''}
             `,
-            error: (error) => html`
+            error: error => html`
               <div class="alert alert-danger my-2" role="alert">
                 <i class="fas fa-exclamation-circle me-2"></i>
                 Error: ${error.message}
               </div>
-            `
+            `,
           })}
         </div>
 
@@ -326,7 +322,7 @@ export class StudentForm extends BaseComponent {
             Si no se proporciona una URL, se dejará como valor nulo
           </div>
         </div>
-        
+
         <div class="d-flex justify-content-end gap-2 mt-4">
           <button
             type="button"
@@ -336,17 +332,17 @@ export class StudentForm extends BaseComponent {
           >
             <i class="fas fa-times me-1"></i> Cancelar
           </button>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            ?disabled=${this.isSubmitting}
-          >
+          <button type="submit" class="btn btn-primary" ?disabled=${this.isSubmitting}>
             ${this.isSubmitting
-              ? html`<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Guardando...`
+              ? html`<span
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Guardando...`
               : this.studentCode
                 ? html`<i class="fas fa-save me-1"></i> Actualizar`
-                : html`<i class="fas fa-plus-circle me-1"></i> Crear`
-            }
+                : html`<i class="fas fa-plus-circle me-1"></i> Crear`}
           </button>
         </div>
       </form>
@@ -357,31 +353,32 @@ export class StudentForm extends BaseComponent {
     form {
       width: 100%;
     }
-    
+
     .form-group {
       margin-bottom: var(--spacing-4);
     }
-    
+
     .error-message {
       color: var(--danger-color);
       font-size: var(--font-size-sm);
       margin-top: var(--spacing-1);
     }
-    
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
       gap: var(--spacing-2);
       margin-top: var(--spacing-6);
     }
-    
-    .loading, .error {
+
+    .loading,
+    .error {
       padding: var(--spacing-4);
       text-align: center;
     }
-    
+
     .error {
       color: var(--danger-color);
     }
   `;
-} 
+}

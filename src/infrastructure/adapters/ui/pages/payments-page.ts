@@ -26,7 +26,7 @@ export class PaymentsPage extends BaseComponent {
         console.log('Iniciando carga de pagos...', this.filters);
         const paymentUseCase = window.services.paymentUseCase;
         let result;
-        
+
         if (Object.keys(this.filters).length > 0) {
           console.log('Cargando pagos con filtros:', this.filters);
           result = await paymentUseCase.getPaymentsByFilters(this.filters);
@@ -34,7 +34,7 @@ export class PaymentsPage extends BaseComponent {
           console.log('Cargando todos los pagos');
           result = await paymentUseCase.getAllPayments();
         }
-        
+
         console.log(`Se encontraron ${result.length} pagos`);
         return result;
       } catch (error) {
@@ -51,7 +51,7 @@ export class PaymentsPage extends BaseComponent {
   private async waitForServices(maxAttempts = 10): Promise<void> {
     return new Promise((resolve, reject) => {
       let attempts = 0;
-      
+
       const checkServices = () => {
         attempts++;
         if (window.services && window.services.paymentUseCase) {
@@ -64,7 +64,7 @@ export class PaymentsPage extends BaseComponent {
           setTimeout(checkServices, 300);
         }
       };
-      
+
       checkServices();
     });
   }
@@ -98,9 +98,9 @@ export class PaymentsPage extends BaseComponent {
   showNotification(event: CustomEvent) {
     this.notification = {
       message: event.detail.message,
-      type: event.detail.type
+      type: event.detail.type,
     };
-    
+
     // Auto-cerrar después de 3 segundos
     setTimeout(() => {
       this.notification = null;
@@ -113,30 +113,34 @@ export class PaymentsPage extends BaseComponent {
   async updatePaymentStatus(paymentId: number, status: PaymentStatus) {
     try {
       await window.services.paymentUseCase.updatePaymentStatus(paymentId, { status });
-      
+
       // Recargar los pagos
       this.filters = { ...this.filters };
-      
+
       // Cerrar el modal si está abierto
       if (this.isDetailModalOpen) {
         this.closeDetailModal();
       }
-      
+
       // Mostrar notificación
-      this.showNotification(new CustomEvent('notification', {
-        detail: {
-          message: 'Estado de pago actualizado correctamente',
-          type: 'success'
-        }
-      }));
+      this.showNotification(
+        new CustomEvent('notification', {
+          detail: {
+            message: 'Estado de pago actualizado correctamente',
+            type: 'success',
+          },
+        })
+      );
     } catch (error) {
       console.error('Error al actualizar estado de pago:', error);
-      this.showNotification(new CustomEvent('notification', {
-        detail: {
-          message: 'Error al actualizar estado de pago',
-          type: 'error'
-        }
-      }));
+      this.showNotification(
+        new CustomEvent('notification', {
+          detail: {
+            message: 'Error al actualizar estado de pago',
+            type: 'error',
+          },
+        })
+      );
     }
   }
 
@@ -160,18 +164,20 @@ export class PaymentsPage extends BaseComponent {
   handlePaymentCreated() {
     // Primero cerramos el formulario
     this.closePaymentForm();
-    
+
     // Forzamos una actualización de los filtros para disparar la recarga
     this.filters = { ...this.filters };
-    
+
     // Mostramos una notificación de éxito
-    this.showNotification(new CustomEvent('notification', {
-      detail: {
-        message: 'Pago creado correctamente',
-        type: 'success'
-      }
-    }));
-    
+    this.showNotification(
+      new CustomEvent('notification', {
+        detail: {
+          message: 'Pago creado correctamente',
+          type: 'success',
+        },
+      })
+    );
+
     // Esperamos un momento antes de ejecutar la tarea para asegurar
     // que los cambios de estado se hayan aplicado
     setTimeout(() => {
@@ -181,15 +187,15 @@ export class PaymentsPage extends BaseComponent {
 
   override connectedCallback() {
     super.connectedCallback();
-    
+
     // Cargamos todos los pagos al inicio
     this.filters = {};
-    
+
     // Verificamos si los servicios ya están disponibles
     if (window.services && window.services.paymentUseCase) {
       this.loadPaymentsTask.run();
     }
-    
+
     // Escuchamos el evento de servicios inicializados
     window.addEventListener('services-initialized', () => {
       this.loadPaymentsTask.run();
@@ -214,7 +220,7 @@ export class PaymentsPage extends BaseComponent {
               </button>
             </div>
           </div>
-          
+
           <div class="card shadow-sm mb-4">
             <div class="card-header bg-light">
               <h5 class="card-title mb-0">
@@ -226,7 +232,7 @@ export class PaymentsPage extends BaseComponent {
               <payment-filter @filter=${this.handleFilter}></payment-filter>
             </div>
           </div>
-          
+
           <div class="card shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
               <h5 class="card-title mb-0">
@@ -236,22 +242,20 @@ export class PaymentsPage extends BaseComponent {
               <span class="badge bg-primary rounded-pill">
                 ${this.loadPaymentsTask.render({
                   pending: () => html`...`,
-                  complete: (payments) => html`${payments.length}`,
-                  error: () => html`0`
+                  complete: payments => html`${payments.length}`,
+                  error: () => html`0`,
                 })}
               </span>
             </div>
-            <div class="card-body">
-              ${this.renderPaymentsTable()}
-            </div>
+            <div class="card-body">${this.renderPaymentsTable()}</div>
           </div>
         </div>
-        
+
         ${this.isDetailModalOpen ? this.renderDetailModal() : ''}
         ${this.notification ? this.renderNotification() : ''}
-        
+
         <!-- Formulario de creación de pagos -->
-        <payment-form 
+        <payment-form
           .isOpen=${this.isPaymentFormOpen}
           .onClose=${() => this.closePaymentForm()}
           .onSuccess=${() => this.handlePaymentCreated()}
@@ -274,17 +278,20 @@ export class PaymentsPage extends BaseComponent {
             </div>
           </div>
         `,
-        complete: (payments) => {
+        complete: payments => {
           if (payments.length === 0) {
             return html`
               <div class="text-center py-5">
                 <i class="fas fa-search fa-3x text-muted mb-3"></i>
                 <p class="lead">No se encontraron pagos</p>
-                <p class="text-muted">Intenta cambiar los filtros de búsqueda o <a href="#" @click=${this.openPaymentForm}>agregar un nuevo pago</a></p>
+                <p class="text-muted">
+                  Intenta cambiar los filtros de búsqueda o
+                  <a href="#" @click=${this.openPaymentForm}>agregar un nuevo pago</a>
+                </p>
               </div>
             `;
           }
-          
+
           return html`
             <div class="table-responsive">
               <table class="table table-striped table-hover">
@@ -300,47 +307,51 @@ export class PaymentsPage extends BaseComponent {
                   </tr>
                 </thead>
                 <tbody>
-                  ${payments.map(payment => html`
-                    <tr>
-                      <td>${payment.id}</td>
-                      <td>${new Date(payment.fecha).toLocaleDateString()}</td>
-                      <td>
-                        ${payment.estudiante 
-                          ? html`${payment.estudiante.nombre} ${payment.estudiante.apellido}`
-                          : html`<span class="text-danger">Datos no disponibles</span>`
-                        }
-                      </td>
-                      <td>$${payment.monto.toFixed(2)}</td>
-                      <td>${this.renderPaymentType(payment.type)}</td>
-                      <td>${this.renderPaymentStatus(payment.status)}</td>
-                      <td>
-                        <div class="d-flex justify-content-end gap-2">
-                          <button
-                            class="btn btn-sm btn-outline-primary"
-                            @click=${() => this.showPaymentDetail(payment)}
-                            title="Ver detalles"
-                          >
-                            <i class="fas fa-eye"></i>
-                          </button>
-                          ${payment.status === PaymentStatus.PENDIENTE ? html`
+                  ${payments.map(
+                    payment => html`
+                      <tr>
+                        <td>${payment.id}</td>
+                        <td>${new Date(payment.fecha).toLocaleDateString()}</td>
+                        <td>
+                          ${payment.estudiante
+                            ? html`${payment.estudiante.nombre} ${payment.estudiante.apellido}`
+                            : html`<span class="text-danger">Datos no disponibles</span>`}
+                        </td>
+                        <td>$${payment.monto.toFixed(2)}</td>
+                        <td>${this.renderPaymentType(payment.type)}</td>
+                        <td>${this.renderPaymentStatus(payment.status)}</td>
+                        <td>
+                          <div class="d-flex justify-content-end gap-2">
                             <button
-                              class="btn btn-sm btn-outline-success"
-                              @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
-                              title="Aprobar pago"
+                              class="btn btn-sm btn-outline-primary"
+                              @click=${() => this.showPaymentDetail(payment)}
+                              title="Ver detalles"
                             >
-                              <i class="fas fa-check"></i>
+                              <i class="fas fa-eye"></i>
                             </button>
-                          ` : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  `)}
+                            ${payment.status === PaymentStatus.PENDIENTE
+                              ? html`
+                                  <button
+                                    class="btn btn-sm btn-outline-success"
+                                    @click=${() =>
+                                      this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
+                                    title="Aprobar pago"
+                                  >
+                                    <i class="fas fa-check"></i>
+                                  </button>
+                                `
+                              : ''}
+                          </div>
+                        </td>
+                      </tr>
+                    `
+                  )}
                 </tbody>
               </table>
             </div>
           `;
         },
-        error: (error) => html`
+        error: error => html`
           <div class="alert alert-danger my-4" role="alert">
             <div class="text-center mb-3">
               <i class="fas fa-exclamation-circle fs-3"></i>
@@ -353,7 +364,7 @@ export class PaymentsPage extends BaseComponent {
               </button>
             </div>
           </div>
-        `
+        `,
       })}
     `;
   }
@@ -363,9 +374,14 @@ export class PaymentsPage extends BaseComponent {
    */
   private renderDetailModal() {
     if (!this.selectedPayment) return html``;
-    
+
     return html`
-      <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+      <div
+        class="modal fade show d-block"
+        tabindex="-1"
+        role="dialog"
+        style="background-color: rgba(0,0,0,0.5)"
+      >
         <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content">
             <div class="modal-header bg-primary text-white">
@@ -373,7 +389,11 @@ export class PaymentsPage extends BaseComponent {
                 <i class="fas fa-info-circle me-2"></i>
                 Detalles del Pago
               </h5>
-              <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+              <button
+                type="button"
+                class="btn-close btn-close-white"
+                @click=${this.closeDetailModal}
+              ></button>
             </div>
             <div class="modal-body">
               <div class="row mb-3">
@@ -383,30 +403,37 @@ export class PaymentsPage extends BaseComponent {
                 </div>
                 <div class="col-md-6">
                   <p class="mb-1 text-muted">Fecha</p>
-                  <p class="fw-bold">${new Date(this.selectedPayment.fecha).toLocaleDateString()}</p>
+                  <p class="fw-bold">
+                    ${new Date(this.selectedPayment.fecha).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
-              
-              ${this.selectedPayment.estudiante ? html`
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <p class="mb-1 text-muted">Estudiante</p>
-                    <p class="fw-bold">${this.selectedPayment.estudiante.nombre} ${this.selectedPayment.estudiante.apellido}</p>
-                  </div>
-                  <div class="col-md-6">
-                    <p class="mb-1 text-muted">Código</p>
-                    <p class="fw-bold">${this.selectedPayment.estudiante.codigo}</p>
-                  </div>
-                </div>
-              ` : html`
-                <div class="row mb-3">
-                  <div class="col-12">
-                    <p class="mb-1 text-muted">Estudiante</p>
-                    <p class="text-danger">Información del estudiante no disponible</p>
-                  </div>
-                </div>
-              `}
-              
+
+              ${this.selectedPayment.estudiante
+                ? html`
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <p class="mb-1 text-muted">Estudiante</p>
+                        <p class="fw-bold">
+                          ${this.selectedPayment.estudiante.nombre}
+                          ${this.selectedPayment.estudiante.apellido}
+                        </p>
+                      </div>
+                      <div class="col-md-6">
+                        <p class="mb-1 text-muted">Código</p>
+                        <p class="fw-bold">${this.selectedPayment.estudiante.codigo}</p>
+                      </div>
+                    </div>
+                  `
+                : html`
+                    <div class="row mb-3">
+                      <div class="col-12">
+                        <p class="mb-1 text-muted">Estudiante</p>
+                        <p class="text-danger">Información del estudiante no disponible</p>
+                      </div>
+                    </div>
+                  `}
+
               <div class="row mb-3">
                 <div class="col-md-6">
                   <p class="mb-1 text-muted">Monto</p>
@@ -417,34 +444,47 @@ export class PaymentsPage extends BaseComponent {
                   <p class="fw-bold">${this.renderPaymentType(this.selectedPayment.type)}</p>
                 </div>
               </div>
-              
+
               <div class="row">
                 <div class="col-12">
                   <p class="mb-1 text-muted">Estado</p>
                   <p class="fw-bold">${this.renderPaymentStatus(this.selectedPayment.status)}</p>
                 </div>
               </div>
-              
-              ${this.selectedPayment.file ? html`
-                <div class="row mt-3">
-                  <div class="col-12">
-                    <p class="mb-1 text-muted">Comprobante</p>
-                    <a href="${this.selectedPayment.file}" target="_blank" class="btn btn-sm btn-outline-primary">
-                      <i class="fas fa-file-alt me-1"></i> Ver comprobante
-                    </a>
-                  </div>
-                </div>
-              ` : ''}
+
+              ${this.selectedPayment.file
+                ? html`
+                    <div class="row mt-3">
+                      <div class="col-12">
+                        <p class="mb-1 text-muted">Comprobante</p>
+                        <a
+                          href="${this.selectedPayment.file}"
+                          target="_blank"
+                          class="btn btn-sm btn-outline-primary"
+                        >
+                          <i class="fas fa-file-alt me-1"></i> Ver comprobante
+                        </a>
+                      </div>
+                    </div>
+                  `
+                : ''}
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click=${this.closeDetailModal}>
                 <i class="fas fa-times me-1"></i> Cerrar
               </button>
-              ${this.selectedPayment.status === PaymentStatus.PENDIENTE ? html`
-                <button type="button" class="btn btn-success" @click=${() => this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.PAGADO)}>
-                  <i class="fas fa-check me-1"></i> Aprobar Pago
-                </button>
-              ` : ''}
+              ${this.selectedPayment.status === PaymentStatus.PENDIENTE
+                ? html`
+                    <button
+                      type="button"
+                      class="btn btn-success"
+                      @click=${() =>
+                        this.updatePaymentStatus(this.selectedPayment!.id, PaymentStatus.PAGADO)}
+                    >
+                      <i class="fas fa-check me-1"></i> Aprobar Pago
+                    </button>
+                  `
+                : ''}
             </div>
           </div>
         </div>
@@ -457,27 +497,34 @@ export class PaymentsPage extends BaseComponent {
    */
   private renderNotification() {
     if (!this.notification) return html``;
-    
-    const typeClass = this.notification.type === 'success' ? 'alert-success' : 
-                      this.notification.type === 'error' ? 'alert-danger' : 
-                      'alert-warning';
-    
-    const icon = this.notification.type === 'success' ? 'fas fa-check-circle' : 
-                 this.notification.type === 'error' ? 'fas fa-exclamation-circle' : 
-                 'fas fa-exclamation-triangle';
-    
+
+    const typeClass =
+      this.notification.type === 'success'
+        ? 'alert-success'
+        : this.notification.type === 'error'
+          ? 'alert-danger'
+          : 'alert-warning';
+
+    const icon =
+      this.notification.type === 'success'
+        ? 'fas fa-check-circle'
+        : this.notification.type === 'error'
+          ? 'fas fa-exclamation-circle'
+          : 'fas fa-exclamation-triangle';
+
     return html`
       <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
           <div class="toast-header ${typeClass} text-white">
             <i class="${icon} me-2"></i>
             <strong class="me-auto">Notificación</strong>
-            <button type="button" class="btn-close btn-close-white" 
-                    @click=${() => this.notification = null}></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              @click=${() => (this.notification = null)}
+            ></button>
           </div>
-          <div class="toast-body">
-            ${this.notification.message}
-          </div>
+          <div class="toast-body">${this.notification.message}</div>
         </div>
       </div>
     `;
@@ -492,9 +539,9 @@ export class PaymentsPage extends BaseComponent {
       [PaymentType.TRANSFERENCIA]: 'Transferencia',
       [PaymentType.CHEQUE]: 'Cheque',
       [PaymentType.TARJETA]: 'Tarjeta',
-      [PaymentType.OTRO]: 'Otro'
+      [PaymentType.OTRO]: 'Otro',
     };
-    
+
     return typeMap[type] || type;
   }
 
@@ -507,17 +554,17 @@ export class PaymentsPage extends BaseComponent {
       [PaymentStatus.PENDIENTE]: 'status-pending',
       [PaymentStatus.PAGADO]: 'status-paid',
       [PaymentStatus.RECHAZADO]: 'status-rejected',
-      [PaymentStatus.CANCELADO]: 'status-cancelled'
+      [PaymentStatus.CANCELADO]: 'status-cancelled',
     };
-    
+
     const statusLabels = {
       [PaymentStatus.CREADO]: 'Creado',
       [PaymentStatus.PENDIENTE]: 'Pendiente',
       [PaymentStatus.PAGADO]: 'Pagado',
       [PaymentStatus.RECHAZADO]: 'Rechazado',
-      [PaymentStatus.CANCELADO]: 'Cancelado'
+      [PaymentStatus.CANCELADO]: 'Cancelado',
     };
-    
+
     return html`<span class="status-badge ${statusClasses[status]}">${statusLabels[status]}</span>`;
   }
 
@@ -528,35 +575,37 @@ export class PaymentsPage extends BaseComponent {
     .payments-page {
       width: 100%;
     }
-    
+
     h1 {
       margin-bottom: var(--spacing-6);
     }
-    
+
     .card {
       margin-bottom: var(--spacing-6);
     }
-    
+
     .actions-cell {
       display: flex;
       gap: var(--spacing-2);
     }
-    
+
     .button-sm {
       padding: var(--spacing-1) var(--spacing-2);
       font-size: var(--font-size-xs);
     }
-    
-    .loading, .error, .empty-state {
+
+    .loading,
+    .error,
+    .empty-state {
       padding: var(--spacing-6);
       text-align: center;
       color: var(--gray-600);
     }
-    
+
     .error {
       color: var(--danger-color);
     }
-    
+
     .status-badge {
       display: inline-block;
       padding: var(--spacing-1) var(--spacing-2);
@@ -564,32 +613,32 @@ export class PaymentsPage extends BaseComponent {
       font-size: var(--font-size-xs);
       font-weight: 600;
     }
-    
+
     .status-created {
       background-color: var(--gray-200);
       color: var(--gray-700);
     }
-    
+
     .status-pending {
       background-color: var(--warning-color);
       color: white;
     }
-    
+
     .status-paid {
       background-color: var(--success-color);
       color: white;
     }
-    
+
     .status-rejected {
       background-color: var(--danger-color);
       color: white;
     }
-    
+
     .status-cancelled {
       background-color: var(--gray-500);
       color: white;
     }
-    
+
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -602,7 +651,7 @@ export class PaymentsPage extends BaseComponent {
       align-items: center;
       z-index: 1000;
     }
-    
+
     .modal-container {
       background-color: white;
       border-radius: var(--border-radius-lg);
@@ -612,7 +661,7 @@ export class PaymentsPage extends BaseComponent {
       overflow-y: auto;
       box-shadow: var(--shadow-lg);
     }
-    
+
     .modal-header {
       padding: var(--spacing-4);
       border-bottom: 1px solid var(--gray-200);
@@ -620,11 +669,11 @@ export class PaymentsPage extends BaseComponent {
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .modal-body {
       padding: var(--spacing-4);
     }
-    
+
     .close-button {
       background: none;
       border: none;
@@ -632,32 +681,32 @@ export class PaymentsPage extends BaseComponent {
       cursor: pointer;
       color: var(--gray-500);
     }
-    
+
     .close-button:hover {
       color: var(--gray-700);
     }
-    
+
     .payment-detail {
       display: flex;
       flex-direction: column;
       gap: var(--spacing-4);
     }
-    
+
     .detail-row {
       display: flex;
       margin-bottom: var(--spacing-2);
     }
-    
+
     .detail-label {
       width: 150px;
       font-weight: 600;
       color: var(--gray-700);
     }
-    
+
     .detail-value {
       flex: 1;
     }
-    
+
     h4 {
       margin-top: var(--spacing-4);
       margin-bottom: var(--spacing-2);
@@ -665,17 +714,18 @@ export class PaymentsPage extends BaseComponent {
       border-bottom: 1px solid var(--gray-200);
       padding-bottom: var(--spacing-2);
     }
-    
-    .file-section, .actions-section {
+
+    .file-section,
+    .actions-section {
       margin-top: var(--spacing-4);
     }
-    
+
     .action-buttons {
       display: flex;
       gap: var(--spacing-2);
       flex-wrap: wrap;
     }
-    
+
     .notification {
       position: fixed;
       bottom: 20px;
@@ -687,19 +737,19 @@ export class PaymentsPage extends BaseComponent {
       z-index: 1000;
       animation: slide-in 0.3s ease-out;
     }
-    
+
     .notification.success {
       background-color: var(--success-color);
     }
-    
+
     .notification.error {
       background-color: var(--danger-color);
     }
-    
+
     .notification.warning {
       background-color: var(--warning-color);
     }
-    
+
     @keyframes slide-in {
       from {
         transform: translateY(100%);
@@ -716,4 +766,4 @@ export class PaymentsPage extends BaseComponent {
   override createRenderRoot() {
     return this;
   }
-} 
+}

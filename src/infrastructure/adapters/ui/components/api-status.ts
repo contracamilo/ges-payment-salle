@@ -10,7 +10,7 @@ import { API_CONFIG } from '../../../../config';
 export class ApiStatus extends BaseComponent {
   @state() private apiConnected: boolean = false;
   @state() private statusMessage: string = 'Verificando conexión...';
-  
+
   private checkInterval?: number;
 
   /**
@@ -22,7 +22,7 @@ export class ApiStatus extends BaseComponent {
     this.checkConnection();
     this.checkInterval = window.setInterval(() => this.checkConnection(), 30000);
   }
-  
+
   /**
    * Cuando el componente se desconecta del DOM
    */
@@ -32,7 +32,7 @@ export class ApiStatus extends BaseComponent {
       clearInterval(this.checkInterval);
     }
   }
-  
+
   /**
    * Verifica la conexión con la API
    */
@@ -40,16 +40,16 @@ export class ApiStatus extends BaseComponent {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`${API_CONFIG.BASE_URL}/health`, {
         method: 'GET',
-        signal: controller.signal
+        signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       this.apiConnected = response.ok;
-      
+
       if (response.ok) {
         this.statusMessage = 'Conectado a la API';
       } else {
@@ -60,23 +60,25 @@ export class ApiStatus extends BaseComponent {
       this.statusMessage = 'No se pudo conectar a la API. Verificar que el servidor esté activo.';
     }
   }
-  
+
   override render() {
     return html`
       <div class="status-bar">
-        <div class="status-indicator ${this.apiConnected ? 'status-connected' : 'status-disconnected'}"></div>
+        <div
+          class="status-indicator ${this.apiConnected ? 'status-connected' : 'status-disconnected'}"
+        ></div>
         <div class="status-text">${this.statusMessage}</div>
       </div>
     `;
   }
-  
+
   static override styles = css`
     :host {
       display: block;
       font-family: Arial, sans-serif;
       margin-bottom: 20px;
     }
-    
+
     .status-bar {
       display: flex;
       align-items: center;
@@ -84,26 +86,26 @@ export class ApiStatus extends BaseComponent {
       background-color: #f0f4f8;
       border-radius: 8px;
       border: 1px solid #d0d7de;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
-    
+
     .status-indicator {
       width: 12px;
       height: 12px;
       border-radius: 50%;
       margin-right: 10px;
     }
-    
+
     .status-connected {
       background-color: #2da44e;
       box-shadow: 0 0 5px #2da44e;
     }
-    
+
     .status-disconnected {
       background-color: #d73a49;
       box-shadow: 0 0 5px #d73a49;
     }
-    
+
     .status-text {
       flex-grow: 1;
       font-size: 14px;
@@ -112,4 +114,4 @@ export class ApiStatus extends BaseComponent {
   `;
 }
 
-export default ApiStatus; 
+export default ApiStatus;

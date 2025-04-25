@@ -37,7 +37,7 @@ const initializeBootstrapElements = () => {
   const collapseElementList = [].slice.call(document.querySelectorAll('.collapse'));
   collapseElementList.map(function (collapseEl) {
     return new bootstrap.Collapse(collapseEl, {
-      toggle: false
+      toggle: false,
     });
   });
 };
@@ -48,18 +48,18 @@ window.initializeBootstrapElements = initializeBootstrapElements;
 // Inicializar cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', () => {
   initializeBootstrapElements();
-  
+
   // Observar cambios en el DOM para inicializar elementos Bootstrap en componentes que se renderizen dinámicamente
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
       if (mutation.type === 'childList' && mutation.addedNodes.length) {
         initializeBootstrapElements();
       }
     });
   });
-  
+
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
   });
-}); 
+});

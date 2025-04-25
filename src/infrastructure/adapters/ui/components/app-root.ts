@@ -51,24 +51,24 @@ export class AppRoot extends BaseComponent {
       display: block;
       min-height: 100vh;
     }
-    
+
     .app-container {
       display: flex;
       flex-direction: column;
     }
-    
+
     .main-content {
       flex: 1;
       padding: 20px 0;
     }
-    
+
     .container {
       width: 100%;
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 var(--spacing-4);
     }
-    
+
     .app-footer {
       background-color: var(--gray-800);
       color: var(--gray-200);
@@ -77,4 +77,4 @@ export class AppRoot extends BaseComponent {
       font-size: var(--font-size-sm);
     }
   `;
-} 
+}

@@ -32,15 +32,15 @@ export class NotFoundPage extends BaseComponent {
       text-align: center;
       padding: var(--spacing-12);
     }
-    
+
     h1 {
       font-size: var(--font-size-2xl);
       margin-bottom: var(--spacing-6);
     }
-    
+
     p {
       margin-bottom: var(--spacing-6);
       color: var(--gray-600);
     }
   `;
-} 
+}

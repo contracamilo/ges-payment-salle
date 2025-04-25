@@ -58,7 +58,9 @@ export class StudentPaymentsPage extends BaseComponent {
       }
       console.log('Cargando pagos para estudiante con código:', this.codigo);
       try {
-        const payments = await window.services.paymentUseCase.getPaymentsByFilters({ estudiante_codigo: this.codigo });
+        const payments = await window.services.paymentUseCase.getPaymentsByFilters({
+          estudiante_codigo: this.codigo,
+        });
         console.log('Pagos cargados:', payments);
         return payments;
       } catch (error) {
@@ -97,7 +99,7 @@ export class StudentPaymentsPage extends BaseComponent {
    */
   showNotification(message: string, type: string) {
     this.notification = { message, type };
-    
+
     // Auto-cerrar después de 3 segundos
     setTimeout(() => {
       this.notification = null;
@@ -110,15 +112,15 @@ export class StudentPaymentsPage extends BaseComponent {
   async updatePaymentStatus(paymentId: number, status: PaymentStatus) {
     try {
       await window.services.paymentUseCase.updatePaymentStatus(paymentId, { status });
-      
+
       // Recargar los pagos
       this.loadPaymentsTask.run();
-      
+
       // Cerrar el modal si está abierto
       if (this.isDetailModalOpen) {
         this.closeDetailModal();
       }
-      
+
       // Mostrar notificación
       this.showNotification('Estado de pago actualizado correctamente', 'success');
     } catch (error) {
@@ -129,7 +131,7 @@ export class StudentPaymentsPage extends BaseComponent {
 
   override connectedCallback() {
     super.connectedCallback();
-    
+
     // Obtener el código de estudiante de la URL
     const location = Router.location;
     if (location && location.params && location.params.codigo) {
@@ -146,7 +148,7 @@ export class StudentPaymentsPage extends BaseComponent {
         console.error('No se pudo obtener el código de estudiante de la URL:', path);
       }
     }
-    
+
     // Asegurar que los servicios estén disponibles
     if (window.services) {
       console.log('Servicios disponibles, cargando datos...');
@@ -181,7 +183,7 @@ export class StudentPaymentsPage extends BaseComponent {
               </div>
             </div>
           `,
-          complete: (student) => {
+          complete: student => {
             if (!student) {
               return html`
                 <div class="alert alert-warning text-center my-5" role="alert">
@@ -194,7 +196,7 @@ export class StudentPaymentsPage extends BaseComponent {
                 </div>
               `;
             }
-            
+
             this.student = student;
             return html`
               <div class="student-payments-page py-4">
@@ -209,7 +211,7 @@ export class StudentPaymentsPage extends BaseComponent {
                     </h1>
                   </div>
                 </div>
-              
+
                 <div class="card shadow-sm mb-4">
                   <div class="card-header bg-light">
                     <h5 class="card-title mb-0">
@@ -234,9 +236,11 @@ export class StudentPaymentsPage extends BaseComponent {
                     </div>
                   </div>
                 </div>
-              
+
                 <div class="card shadow-sm">
-                  <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                  <div
+                    class="card-header bg-light d-flex justify-content-between align-items-center"
+                  >
                     <h5 class="card-title mb-0">
                       <i class="fas fa-clipboard-list me-2"></i>
                       Historial de Pagos
@@ -244,22 +248,20 @@ export class StudentPaymentsPage extends BaseComponent {
                     <span class="badge bg-primary rounded-pill">
                       ${this.loadPaymentsTask.render({
                         pending: () => html`...`,
-                        complete: (payments) => html`${payments.length}`,
-                        error: () => html`0`
+                        complete: payments => html`${payments.length}`,
+                        error: () => html`0`,
                       })}
                     </span>
                   </div>
-                  <div class="card-body">
-                    ${this.renderPaymentsTable()}
-                  </div>
+                  <div class="card-body">${this.renderPaymentsTable()}</div>
                 </div>
-              
+
                 ${this.isDetailModalOpen ? this.renderDetailModal() : ''}
                 ${this.notification ? this.renderNotification() : ''}
               </div>
             `;
           },
-          error: (error) => html`
+          error: error => html`
             <div class="alert alert-danger text-center my-5" role="alert">
               <i class="fas fa-exclamation-circle fs-3 mb-3"></i>
               <h4>Error al cargar datos</h4>
@@ -268,7 +270,7 @@ export class StudentPaymentsPage extends BaseComponent {
                 <i class="fas fa-arrow-left me-1"></i> Volver a la lista
               </button>
             </div>
-          `
+          `,
         })}
       </div>
     `;
@@ -287,7 +289,7 @@ export class StudentPaymentsPage extends BaseComponent {
             </div>
           </div>
         `,
-        complete: (payments) => {
+        complete: payments => {
           console.log('Renderizando tabla de pagos:', payments);
           if (!payments || payments.length === 0) {
             return html`
@@ -296,13 +298,11 @@ export class StudentPaymentsPage extends BaseComponent {
                   <i class="fas fa-info-circle fs-3"></i>
                 </div>
                 <h5 class="text-center">No hay pagos registrados</h5>
-                <p class="text-center">
-                  Este estudiante no tiene pagos registrados en el sistema.
-                </p>
+                <p class="text-center">Este estudiante no tiene pagos registrados en el sistema.</p>
               </div>
             `;
           }
-          
+
           return html`
             <div class="table-responsive">
               <table class="table table-striped table-hover">
@@ -317,56 +317,59 @@ export class StudentPaymentsPage extends BaseComponent {
                   </tr>
                 </thead>
                 <tbody>
-                  ${payments.map(payment => html`
-                    <tr>
-                      <td>${payment.id}</td>
-                      <td>${new Date(payment.fecha).toLocaleDateString()}</td>
-                      <td>$${payment.monto.toFixed(2)}</td>
-                      <td>${this.renderPaymentType(payment.type)}</td>
-                      <td>${this.renderPaymentStatus(payment.status)}</td>
-                      <td>
-                        <div class="d-flex justify-content-end gap-2">
-                          <button 
-                            class="btn btn-sm btn-outline-primary"
-                            @click=${() => this.showPaymentDetail(payment.id)}
-                            title="Ver detalles"
-                          >
-                            <i class="fas fa-eye"></i>
-                          </button>
-                          ${payment.status === PaymentStatus.PENDIENTE ? html`
-                            <button 
-                              class="btn btn-sm btn-outline-success"
-                              @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
-                              title="Aprobar pago"
+                  ${payments.map(
+                    payment => html`
+                      <tr>
+                        <td>${payment.id}</td>
+                        <td>${new Date(payment.fecha).toLocaleDateString()}</td>
+                        <td>$${payment.monto.toFixed(2)}</td>
+                        <td>${this.renderPaymentType(payment.type)}</td>
+                        <td>${this.renderPaymentStatus(payment.status)}</td>
+                        <td>
+                          <div class="d-flex justify-content-end gap-2">
+                            <button
+                              class="btn btn-sm btn-outline-primary"
+                              @click=${() => this.showPaymentDetail(payment.id)}
+                              title="Ver detalles"
                             >
-                              <i class="fas fa-check"></i>
+                              <i class="fas fa-eye"></i>
                             </button>
-                          ` : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  `)}
+                            ${payment.status === PaymentStatus.PENDIENTE
+                              ? html`
+                                  <button
+                                    class="btn btn-sm btn-outline-success"
+                                    @click=${() =>
+                                      this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
+                                    title="Aprobar pago"
+                                  >
+                                    <i class="fas fa-check"></i>
+                                  </button>
+                                `
+                              : ''}
+                          </div>
+                        </td>
+                      </tr>
+                    `
+                  )}
                 </tbody>
               </table>
             </div>
           `;
         },
-        error: (error) => html`
+        error: error => html`
           <div class="alert alert-danger my-4" role="alert">
             <div class="text-center mb-3">
               <i class="fas fa-exclamation-circle fs-3"></i>
             </div>
             <h5 class="text-center">Error al cargar los pagos</h5>
-            <p class="text-center">
-              ${error.message || 'Ocurrió un error inesperado'}
-            </p>
+            <p class="text-center">${error.message || 'Ocurrió un error inesperado'}</p>
             <div class="text-center mt-3">
               <button class="btn btn-sm btn-primary" @click=${() => this.loadPaymentsTask.run()}>
                 <i class="fas fa-sync-alt me-1"></i> Reintentar
               </button>
             </div>
           </div>
-        `
+        `,
       })}
     `;
   }
@@ -378,12 +381,20 @@ export class StudentPaymentsPage extends BaseComponent {
     return html`
       ${this.loadPaymentsTask.render({
         pending: () => html`
-          <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+          <div
+            class="modal fade show d-block"
+            tabindex="-1"
+            style="background-color: rgba(0,0,0,0.5)"
+          >
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                   <h5 class="modal-title">Detalles del Pago</h5>
-                  <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+                  <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    @click=${this.closeDetailModal}
+                  ></button>
                 </div>
                 <div class="modal-body text-center py-4">
                   <div class="spinner-border text-primary" role="status">
@@ -394,15 +405,19 @@ export class StudentPaymentsPage extends BaseComponent {
             </div>
           </div>
         `,
-        complete: (payments) => {
+        complete: payments => {
           const payment = payments.find(p => p.id === this.selectedPaymentId);
           if (!payment) {
             this.closeDetailModal();
             return html``;
           }
-          
+
           return html`
-            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+            <div
+              class="modal fade show d-block"
+              tabindex="-1"
+              style="background-color: rgba(0,0,0,0.5)"
+            >
               <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                   <div class="modal-header bg-primary text-white">
@@ -410,7 +425,11 @@ export class StudentPaymentsPage extends BaseComponent {
                       <i class="fas fa-info-circle me-2"></i>
                       Detalles del Pago
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+                    <button
+                      type="button"
+                      class="btn-close btn-close-white"
+                      @click=${this.closeDetailModal}
+                    ></button>
                   </div>
                   <div class="modal-body">
                     <div class="row mb-3">
@@ -423,7 +442,7 @@ export class StudentPaymentsPage extends BaseComponent {
                         <p class="fw-bold">${new Date(payment.fecha).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                       <div class="col-md-6">
                         <p class="mb-1 text-muted">Monto</p>
@@ -434,47 +453,71 @@ export class StudentPaymentsPage extends BaseComponent {
                         <p class="fw-bold">${this.renderPaymentType(payment.type)}</p>
                       </div>
                     </div>
-                    
+
                     <div class="row">
                       <div class="col-12">
                         <p class="mb-1 text-muted">Estado</p>
                         <p class="fw-bold">${this.renderPaymentStatus(payment.status)}</p>
                       </div>
                     </div>
-                    
-                    ${payment.file ? html`
-                      <div class="row mt-3">
-                        <div class="col-12">
-                          <p class="mb-1 text-muted">Comprobante</p>
-                          <a href="${payment.file}" target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-file-alt me-1"></i> Ver comprobante
-                          </a>
-                        </div>
-                      </div>
-                    ` : ''}
+
+                    ${payment.file
+                      ? html`
+                          <div class="row mt-3">
+                            <div class="col-12">
+                              <p class="mb-1 text-muted">Comprobante</p>
+                              <a
+                                href="${payment.file}"
+                                target="_blank"
+                                class="btn btn-sm btn-outline-primary"
+                              >
+                                <i class="fas fa-file-alt me-1"></i> Ver comprobante
+                              </a>
+                            </div>
+                          </div>
+                        `
+                      : ''}
                   </div>
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @click=${this.closeDetailModal}>
                       <i class="fas fa-times me-1"></i> Cerrar
                     </button>
-                    ${payment.status === PaymentStatus.PENDIENTE ? html`
-                      <button type="button" class="btn btn-success" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}>
-                        <i class="fas fa-check me-1"></i> Aprobar Pago
-                      </button>
-                    ` : ''}
-                    ${payment.status === PaymentStatus.PAGADO ? html`
-                      <button type="button" class="btn btn-warning" @click=${() => this.updatePaymentStatus(payment.id, PaymentStatus.PENDIENTE)}>
-                        <i class="fas fa-undo me-1"></i> Marcar como Pendiente
-                      </button>
-                    ` : ''}
+                    ${payment.status === PaymentStatus.PENDIENTE
+                      ? html`
+                          <button
+                            type="button"
+                            class="btn btn-success"
+                            @click=${() =>
+                              this.updatePaymentStatus(payment.id, PaymentStatus.PAGADO)}
+                          >
+                            <i class="fas fa-check me-1"></i> Aprobar Pago
+                          </button>
+                        `
+                      : ''}
+                    ${payment.status === PaymentStatus.PAGADO
+                      ? html`
+                          <button
+                            type="button"
+                            class="btn btn-warning"
+                            @click=${() =>
+                              this.updatePaymentStatus(payment.id, PaymentStatus.PENDIENTE)}
+                          >
+                            <i class="fas fa-undo me-1"></i> Marcar como Pendiente
+                          </button>
+                        `
+                      : ''}
                   </div>
                 </div>
               </div>
             </div>
           `;
         },
-        error: (error) => html`
-          <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+        error: error => html`
+          <div
+            class="modal fade show d-block"
+            tabindex="-1"
+            style="background-color: rgba(0,0,0,0.5)"
+          >
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -482,7 +525,11 @@ export class StudentPaymentsPage extends BaseComponent {
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Error
                   </h5>
-                  <button type="button" class="btn-close btn-close-white" @click=${this.closeDetailModal}></button>
+                  <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    @click=${this.closeDetailModal}
+                  ></button>
                 </div>
                 <div class="modal-body">
                   <div class="alert alert-danger" role="alert">
@@ -497,7 +544,7 @@ export class StudentPaymentsPage extends BaseComponent {
               </div>
             </div>
           </div>
-        `
+        `,
       })}
     `;
   }
@@ -507,27 +554,34 @@ export class StudentPaymentsPage extends BaseComponent {
    */
   private renderNotification() {
     if (!this.notification) return html``;
-    
-    const typeClass = this.notification.type === 'success' ? 'alert-success' : 
-                      this.notification.type === 'error' ? 'alert-danger' : 
-                      'alert-warning';
-    
-    const icon = this.notification.type === 'success' ? 'fas fa-check-circle' : 
-                this.notification.type === 'error' ? 'fas fa-exclamation-circle' : 
-                'fas fa-exclamation-triangle';
-    
+
+    const typeClass =
+      this.notification.type === 'success'
+        ? 'alert-success'
+        : this.notification.type === 'error'
+          ? 'alert-danger'
+          : 'alert-warning';
+
+    const icon =
+      this.notification.type === 'success'
+        ? 'fas fa-check-circle'
+        : this.notification.type === 'error'
+          ? 'fas fa-exclamation-circle'
+          : 'fas fa-exclamation-triangle';
+
     return html`
       <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
           <div class="toast-header ${typeClass} text-white">
             <i class="${icon} me-2"></i>
             <strong class="me-auto">Notificación</strong>
-            <button type="button" class="btn-close btn-close-white" 
-                    @click=${() => this.notification = null}></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              @click=${() => (this.notification = null)}
+            ></button>
           </div>
-          <div class="toast-body">
-            ${this.notification.message}
-          </div>
+          <div class="toast-body">${this.notification.message}</div>
         </div>
       </div>
     `;
@@ -572,4 +626,4 @@ export class StudentPaymentsPage extends BaseComponent {
         return html`<span class="badge bg-light text-dark">${status}</span>`;
     }
   }
-} 
+}

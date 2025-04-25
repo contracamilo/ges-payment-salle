@@ -22,4 +22,4 @@ export const APP_CONFIG = {
   APP_NAME: 'Sistema de Gestión de Estudiantes',
   VERSION: '1.0.0',
   ENVIRONMENT: getEnv('NODE_ENV', 'development'),
-}; 
+};

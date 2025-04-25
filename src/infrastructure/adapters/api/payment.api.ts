@@ -1,5 +1,11 @@
 import { PaymentRepository } from '../../../application/ports/payment.repository';
-import { Payment, CreatePaymentDto, UpdatePaymentStatusDto, PaymentStatus, PaymentType } from '../../../domain/models/payment.model';
+import {
+  Payment,
+  CreatePaymentDto,
+  UpdatePaymentStatusDto,
+  PaymentStatus,
+  PaymentType,
+} from '../../../domain/models/payment.model';
 import { PaymentFilters } from '../../../domain/models/filters.model';
 import { fetchApi } from './api.config';
 
@@ -34,7 +40,7 @@ export class PaymentApiRepository implements PaymentRepository {
   async getByFilters(filters: PaymentFilters): Promise<Payment[]> {
     // Construimos la URL con los parámetros de filtro
     const params = new URLSearchParams();
-    
+
     if (filters.estudiante_codigo) {
       params.append('estudiante_codigo', filters.estudiante_codigo);
       console.log(`Filtrando pagos por estudiante: ${filters.estudiante_codigo}`);
@@ -54,13 +60,13 @@ export class PaymentApiRepository implements PaymentRepository {
 
     const url = `/pagos?${params.toString()}`;
     console.log(`Realizando petición API: ${url}`);
-    
+
     try {
       const payments = await fetchApi<Payment[]>(url);
       console.log(`Pagos recibidos: ${payments.length}`);
       return payments;
     } catch (error) {
-      console.error(`Error al obtener pagos con filtros:`, error);
+      console.error('Error al obtener pagos con filtros:', error);
       throw error;
     }
   }
@@ -99,20 +105,20 @@ export class PaymentApiRepository implements PaymentRepository {
    */
   async create(payment: CreatePaymentDto): Promise<Payment> {
     console.log('PaymentApiRepository - Creando nuevo pago:', payment);
-    
+
     // Verificar que el pago incluya la información del estudiante
     if (!payment.estudiante) {
       console.error('PaymentApiRepository - Error: El pago no incluye información del estudiante');
     } else {
       console.log('PaymentApiRepository - Información de estudiante incluida:', payment.estudiante);
     }
-    
+
     try {
       const result = await fetchApi<Payment>('/pagos', {
         method: 'POST',
-        body: JSON.stringify(payment)
+        body: JSON.stringify(payment),
       });
-      
+
       console.log('PaymentApiRepository - Pago creado exitosamente:', result);
       return result;
     } catch (error) {
@@ -127,7 +133,7 @@ export class PaymentApiRepository implements PaymentRepository {
   async updateStatus(pagoId: number, statusData: UpdatePaymentStatusDto): Promise<Payment> {
     return fetchApi<Payment>(`/pagos/${pagoId}/actualizarPago`, {
       method: 'PUT',
-      body: JSON.stringify(statusData)
+      body: JSON.stringify(statusData),
     });
   }
-} 
+}

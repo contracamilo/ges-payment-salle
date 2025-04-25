@@ -61,34 +61,38 @@ export class StudentList extends BaseComponent {
    */
   async deleteStudent() {
     if (!this.selectedStudent) return;
-    
+
     try {
       await window.services.studentUseCase.deleteStudent(this.selectedStudent.codigo);
       this.isDeleteDialogOpen = false;
       this.selectedStudent = null;
-      
+
       // Forzamos una actualización para que se recarguen los datos
       this.filters = { ...this.filters };
-      
+
       // Notificamos el éxito
-      this.dispatchEvent(new CustomEvent('notification', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          message: 'Estudiante eliminado con éxito',
-          type: 'success'
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('notification', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            message: 'Estudiante eliminado con éxito',
+            type: 'success',
+          },
+        })
+      );
     } catch (error) {
       console.error('Error al eliminar estudiante:', error);
-      this.dispatchEvent(new CustomEvent('notification', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          message: 'Error al eliminar estudiante',
-          type: 'error'
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent('notification', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            message: 'Error al eliminar estudiante',
+            type: 'error',
+          },
+        })
+      );
     }
   }
 
@@ -98,11 +102,13 @@ export class StudentList extends BaseComponent {
    */
   editStudent(codigo: string) {
     // Dispatches an event to open the edit student form/modal
-    this.dispatchEvent(new CustomEvent('edit-student', {
-      detail: { codigo },
-      bubbles: true,
-      composed: true
-    }));
+    this.dispatchEvent(
+      new CustomEvent('edit-student', {
+        detail: { codigo },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   /**
@@ -110,10 +116,12 @@ export class StudentList extends BaseComponent {
    */
   createStudent() {
     // Dispatches an event to open the create student form/modal
-    this.dispatchEvent(new CustomEvent('create-student', {
-      bubbles: true,
-      composed: true
-    }));
+    this.dispatchEvent(
+      new CustomEvent('create-student', {
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   render() {
@@ -131,7 +139,6 @@ export class StudentList extends BaseComponent {
         </div>
 
         ${this.renderStudentsTable()}
-
         ${this.isDeleteDialogOpen ? this.renderDeleteConfirmDialog() : ''}
       </div>
     `;
@@ -144,11 +151,11 @@ export class StudentList extends BaseComponent {
     return html`
       ${this.loadStudentsTask.render({
         pending: () => html`<div class="loading">Cargando estudiantes...</div>`,
-        complete: (students) => {
+        complete: students => {
           if (students.length === 0) {
             return html`<div class="empty-state">No hay estudiantes registrados</div>`;
           }
-          
+
           return html`
             <div class="table-container">
               <table>
@@ -162,31 +169,45 @@ export class StudentList extends BaseComponent {
                   </tr>
                 </thead>
                 <tbody>
-                  ${students.map(student => html`
-                    <tr>
-                      <td data-label="Código">${student.codigo}</td>
-                      <td data-label="Nombre">${student.nombre}</td>
-                      <td data-label="Apellido">${student.apellido}</td>
-                      <td data-label="Programa">${student.programaId}</td>
-                      <td data-label="Acciones" class="actions-cell">
-                        <button class="icon-button" title="Editar" @click=${() => this.editStudent(student.codigo)}>
-                          ✏️
-                        </button>
-                        <button class="icon-button" title="Eliminar" @click=${() => this.confirmDelete(student)}>
-                          🗑️
-                        </button>
-                        <button class="button button-primary button-sm" @click=${() => this.navigateToStudentPayments(student.codigo)}>
-                          Ver Pagos
-                        </button>
-                      </td>
-                    </tr>
-                  `)}
+                  ${students.map(
+                    student => html`
+                      <tr>
+                        <td data-label="Código">${student.codigo}</td>
+                        <td data-label="Nombre">${student.nombre}</td>
+                        <td data-label="Apellido">${student.apellido}</td>
+                        <td data-label="Programa">${student.programaId}</td>
+                        <td data-label="Acciones" class="actions-cell">
+                          <button
+                            class="icon-button"
+                            title="Editar"
+                            @click=${() => this.editStudent(student.codigo)}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            class="icon-button"
+                            title="Eliminar"
+                            @click=${() => this.confirmDelete(student)}
+                          >
+                            🗑️
+                          </button>
+                          <button
+                            class="button button-primary button-sm"
+                            @click=${() => this.navigateToStudentPayments(student.codigo)}
+                          >
+                            Ver Pagos
+                          </button>
+                        </td>
+                      </tr>
+                    `
+                  )}
                 </tbody>
               </table>
             </div>
           `;
         },
-        error: (error) => html`<div class="error">Error al cargar estudiantes: ${error.message}</div>`
+        error: error =>
+          html`<div class="error">Error al cargar estudiantes: ${error.message}</div>`,
       })}
     `;
   }
@@ -196,7 +217,7 @@ export class StudentList extends BaseComponent {
    */
   private renderDeleteConfirmDialog() {
     if (!this.selectedStudent) return html``;
-    
+
     return html`
       <div class="modal-overlay">
         <div class="modal-container">
@@ -204,16 +225,17 @@ export class StudentList extends BaseComponent {
             <h3>Confirmar Eliminación</h3>
           </div>
           <div class="modal-body">
-            <p>¿Estás seguro de que quieres eliminar al estudiante ${this.selectedStudent.nombre} ${this.selectedStudent.apellido} (${this.selectedStudent.codigo})?</p>
+            <p>
+              ¿Estás seguro de que quieres eliminar al estudiante ${this.selectedStudent.nombre}
+              ${this.selectedStudent.apellido} (${this.selectedStudent.codigo})?
+            </p>
             <p class="text-danger">Esta acción no se puede deshacer.</p>
           </div>
           <div class="modal-footer">
-            <button class="button button-outline" @click=${() => this.isDeleteDialogOpen = false}>
+            <button class="button button-outline" @click=${() => (this.isDeleteDialogOpen = false)}>
               Cancelar
             </button>
-            <button class="button button-danger" @click=${this.deleteStudent}>
-              Eliminar
-            </button>
+            <button class="button button-danger" @click=${this.deleteStudent}>Eliminar</button>
           </div>
         </div>
       </div>
@@ -224,31 +246,31 @@ export class StudentList extends BaseComponent {
     :host {
       display: block;
     }
-    
+
     .student-list-container {
       width: 100%;
     }
-    
+
     .student-list-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: var(--spacing-4);
     }
-    
+
     .student-filters {
       margin-bottom: var(--spacing-4);
     }
-    
+
     .table-container {
       overflow-x: auto;
     }
-    
+
     .actions-cell {
       display: flex;
       gap: var(--spacing-2);
     }
-    
+
     .icon-button {
       background: none;
       border: none;
@@ -256,22 +278,24 @@ export class StudentList extends BaseComponent {
       font-size: 1.2rem;
       padding: var(--spacing-1);
     }
-    
+
     .button-sm {
       padding: var(--spacing-1) var(--spacing-2);
       font-size: var(--font-size-xs);
     }
-    
-    .loading, .error, .empty-state {
+
+    .loading,
+    .error,
+    .empty-state {
       padding: var(--spacing-6);
       text-align: center;
       color: var(--gray-600);
     }
-    
+
     .error {
       color: var(--danger-color);
     }
-    
+
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -284,7 +308,7 @@ export class StudentList extends BaseComponent {
       align-items: center;
       z-index: 1000;
     }
-    
+
     .modal-container {
       background-color: white;
       border-radius: var(--border-radius-lg);
@@ -294,16 +318,16 @@ export class StudentList extends BaseComponent {
       overflow-y: auto;
       box-shadow: var(--shadow-lg);
     }
-    
+
     .modal-header {
       padding: var(--spacing-4);
       border-bottom: 1px solid var(--gray-200);
     }
-    
+
     .modal-body {
       padding: var(--spacing-4);
     }
-    
+
     .modal-footer {
       padding: var(--spacing-4);
       border-top: 1px solid var(--gray-200);
@@ -312,4 +336,4 @@ export class StudentList extends BaseComponent {
       gap: var(--spacing-2);
     }
   `;
-} 
+}

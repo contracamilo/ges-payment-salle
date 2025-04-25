@@ -1,4 +1,10 @@
-import { Payment, CreatePaymentDto, UpdatePaymentStatusDto, PaymentStatus, PaymentType } from '../../domain/models/payment.model';
+import {
+  Payment,
+  CreatePaymentDto,
+  UpdatePaymentStatusDto,
+  PaymentStatus,
+  PaymentType,
+} from '../../domain/models/payment.model';
 import { PaymentFilters } from '../../domain/models/filters.model';
 
 /**
@@ -61,4 +67,4 @@ export interface PaymentRepository {
    * @returns Promise con el pago actualizado
    */
   updateStatus(pagoId: number, statusData: UpdatePaymentStatusDto): Promise<Payment>;
-} 
+}

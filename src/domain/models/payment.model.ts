@@ -33,7 +33,7 @@ export enum PaymentType {
   TRANSFERENCIA = 'TRANSFERENCIA',
   CHEQUE = 'CHEQUE',
   TARJETA = 'TARJETA',
-  OTRO = 'OTRO'
+  OTRO = 'OTRO',
 }
 
 /**
@@ -44,14 +44,14 @@ export enum PaymentStatus {
   PENDIENTE = 'PENDIENTE',
   PAGADO = 'PAGADO',
   RECHAZADO = 'RECHAZADO',
-  CANCELADO = 'CANCELADO'
+  CANCELADO = 'CANCELADO',
 }
 
 /**
  * Modelo para la creación de un nuevo pago
  */
-export type CreatePaymentDto = Omit<Payment, 'id'> & { 
-  estudianteId: string 
+export type CreatePaymentDto = Omit<Payment, 'id'> & {
+  estudianteId: string;
 };
 
 /**
@@ -59,4 +59,4 @@ export type CreatePaymentDto = Omit<Payment, 'id'> & {
  */
 export interface UpdatePaymentStatusDto {
   status: PaymentStatus;
-} 
+}

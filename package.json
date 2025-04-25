@@ -10,7 +10,17 @@
     "preview": "vite preview",
     "lint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,js,html,css}\"",
-    "clean-install": "rm -rf node_modules package-lock.json && npm install"
+    "clean-install": "rm -rf node_modules package-lock.json && npm install",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{html,css}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@lit-labs/context": "^0.3.3",
@@ -25,6 +35,8 @@
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "eslint": "^8.55.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.2.0",
     "prettier": "^3.1.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"

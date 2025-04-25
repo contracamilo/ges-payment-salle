@@ -36,4 +36,4 @@ export interface Program {
   id: string;
   /** Nombre del programa */
   nombre: string;
-} 
+}

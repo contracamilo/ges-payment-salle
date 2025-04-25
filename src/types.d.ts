@@ -8,4 +8,4 @@ interface Window {
 
 // Declaración de módulos para paquetes que no tienen declaraciones de tipos
 declare module '@vaadin/router';
-declare module '@lit-labs/task'; 
+declare module '@lit-labs/task';

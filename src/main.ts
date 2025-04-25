@@ -38,37 +38,39 @@ initializeServices();
  */
 function initializeServices() {
   console.log(`Inicializando servicios con ${USE_REAL_API ? 'API REAL' : 'DATOS MOCK'}...`);
-  
+
   try {
     // Creamos los repositorios
     const studentRepository = new StudentApiRepository();
     const paymentRepository = new PaymentApiRepository();
-    
+
     // Creamos los casos de uso
     const studentUseCase = new StudentUseCase(studentRepository);
     const paymentUseCase = new PaymentUseCase(paymentRepository);
-    
+
     // Los exponemos como servicios globales para que los componentes puedan acceder a ellos
     window.services = {
       studentUseCase,
-      paymentUseCase
+      paymentUseCase,
     };
 
-    console.log(`Servicios inicializados correctamente usando ${USE_REAL_API ? 'API REAL' : 'DATOS MOCK'}`);
-    
+    console.log(
+      `Servicios inicializados correctamente usando ${USE_REAL_API ? 'API REAL' : 'DATOS MOCK'}`
+    );
+
     // Lanzamos un evento para notificar que los servicios están disponibles
     window.dispatchEvent(new CustomEvent('services-initialized'));
-    
+
     return true;
   } catch (error) {
     console.error('Error al inicializar servicios:', error);
-    
+
     // Intentamos reiniciar los servicios después de un breve retraso
     setTimeout(() => {
       console.log('Intentando reiniciar servicios...');
       initializeServices();
     }, 2000);
-    
+
     return false;
   }
 }
@@ -79,25 +81,25 @@ window.initializeServices = initializeServices;
 // Inicializamos la aplicación
 document.addEventListener('DOMContentLoaded', () => {
   console.log(`Aplicación ${APP_CONFIG.APP_NAME} v${APP_CONFIG.VERSION} inicializada`);
-  
+
   // Verificar que los servicios se hayan inicializado correctamente
   if (!window.services) {
     console.log('Inicializando servicios desde DOMContentLoaded...');
     initializeServices();
   }
-  
+
   // Inicializar elementos de Bootstrap
   if (window.initializeBootstrapElements) {
     window.initializeBootstrapElements();
   }
-  
+
   // Escuchar eventos de renderizado para componentes Lit
   document.addEventListener('component-updated', () => {
     if (window.initializeBootstrapElements) {
       window.initializeBootstrapElements();
     }
   });
-  
+
   // Escuchar eventos de navegación para asegurar que los servicios estén disponibles
   window.addEventListener('vaadin-router-location-changed', () => {
     console.log('Navegación detectada, verificando servicios...');
@@ -109,15 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Añadimos un listener global para interceptar errores y reiniciar servicios si es necesario
-window.addEventListener('error', (event) => {
+window.addEventListener('error', event => {
   console.error('Error global detectado:', event.error);
-  
+
   // Si el error es relacionado con servicios no disponibles, intentamos reiniciarlos
-  if (event.error && event.error.message && 
-      (event.error.message.includes('services') || 
-       event.error.message.includes('undefined') || 
-       event.error.message.includes('null'))) {
-    
+  if (
+    event.error &&
+    event.error.message &&
+    (event.error.message.includes('services') ||
+      event.error.message.includes('undefined') ||
+      event.error.message.includes('null'))
+  ) {
     console.log('Posible error de servicios detectado, verificando...');
     if (!window.services) {
       console.log('Servicios no disponibles, reiniciando...');
@@ -137,4 +141,4 @@ declare global {
     bootstrap: any; // Añadimos Bootstrap a window
     initializeBootstrapElements: Function; // Añadimos la función de inicialización
   }
-} 
+}

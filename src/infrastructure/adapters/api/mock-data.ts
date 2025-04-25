@@ -9,7 +9,7 @@ export const MOCK_STUDENTS: Student[] = [
     nombre: 'Juan',
     apellido: 'Pérez',
     programaId: 'ING1',
-    foto: null
+    foto: null,
   },
   {
     id: '2',
@@ -17,7 +17,7 @@ export const MOCK_STUDENTS: Student[] = [
     nombre: 'María',
     apellido: 'González',
     programaId: 'MED1',
-    foto: null
+    foto: null,
   },
   {
     id: '3',
@@ -25,8 +25,8 @@ export const MOCK_STUDENTS: Student[] = [
     nombre: 'Carlos',
     apellido: 'Rodríguez',
     programaId: 'ADM1',
-    foto: null
-  }
+    foto: null,
+  },
 ];
 
 // Datos de pagos de prueba
@@ -44,8 +44,8 @@ export const MOCK_PAYMENTS: Payment[] = [
       nombre: 'Juan',
       apellido: 'Pérez',
       programaId: 'ING1',
-      foto: null
-    }
+      foto: null,
+    },
   },
   {
     id: 2,
@@ -60,8 +60,8 @@ export const MOCK_PAYMENTS: Payment[] = [
       nombre: 'María',
       apellido: 'González',
       programaId: 'MED1',
-      foto: null
-    }
+      foto: null,
+    },
   },
   {
     id: 3,
@@ -76,8 +76,8 @@ export const MOCK_PAYMENTS: Payment[] = [
       nombre: 'Carlos',
       apellido: 'Rodríguez',
       programaId: 'ADM1',
-      foto: null
-    }
+      foto: null,
+    },
   },
   {
     id: 4,
@@ -92,12 +92,12 @@ export const MOCK_PAYMENTS: Payment[] = [
       nombre: 'Juan',
       apellido: 'Pérez',
       programaId: 'ING1',
-      foto: null
-    }
-  }
+      foto: null,
+    },
+  },
 ];
 
 // Función para obtener pagos de un estudiante específico
 export function getStudentPayments(codigo: string): Payment[] {
   return MOCK_PAYMENTS.filter(payment => payment.estudiante.codigo === codigo);
-} 
+}

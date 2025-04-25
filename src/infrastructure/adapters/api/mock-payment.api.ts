@@ -1,5 +1,11 @@
 import { PaymentRepository } from '../../../application/ports/payment.repository';
-import { Payment, CreatePaymentDto, UpdatePaymentStatusDto, PaymentStatus, PaymentType } from '../../../domain/models/payment.model';
+import {
+  Payment,
+  CreatePaymentDto,
+  UpdatePaymentStatusDto,
+  PaymentStatus,
+  PaymentType,
+} from '../../../domain/models/payment.model';
 import { PaymentFilters } from '../../../domain/models/filters.model';
 import { MOCK_PAYMENTS } from './mock-data';
 
@@ -30,39 +36,31 @@ export class MockPaymentRepository implements PaymentRepository {
    */
   async getByFilters(filters: PaymentFilters): Promise<Payment[]> {
     let filteredPayments = [...this.payments];
-    
+
     if (filters.estudiante_codigo) {
-      filteredPayments = filteredPayments.filter(p => 
-        p.estudiante.codigo === filters.estudiante_codigo
+      filteredPayments = filteredPayments.filter(
+        p => p.estudiante.codigo === filters.estudiante_codigo
       );
     }
-    
+
     if (filters.fechaInicio) {
       const fechaInicio = new Date(filters.fechaInicio);
-      filteredPayments = filteredPayments.filter(p => 
-        new Date(p.fecha) >= fechaInicio
-      );
+      filteredPayments = filteredPayments.filter(p => new Date(p.fecha) >= fechaInicio);
     }
-    
+
     if (filters.fechaFin) {
       const fechaFin = new Date(filters.fechaFin);
-      filteredPayments = filteredPayments.filter(p => 
-        new Date(p.fecha) <= fechaFin
-      );
+      filteredPayments = filteredPayments.filter(p => new Date(p.fecha) <= fechaFin);
     }
-    
+
     if (filters.status) {
-      filteredPayments = filteredPayments.filter(p => 
-        p.status === filters.status
-      );
+      filteredPayments = filteredPayments.filter(p => p.status === filters.status);
     }
-    
+
     if (filters.type) {
-      filteredPayments = filteredPayments.filter(p => 
-        p.type === filters.type
-      );
+      filteredPayments = filteredPayments.filter(p => p.type === filters.type);
     }
-    
+
     return Promise.resolve(filteredPayments);
   }
 
@@ -101,9 +99,9 @@ export class MockPaymentRepository implements PaymentRepository {
       nombre: 'Estudiante',
       apellido: 'Prueba',
       programaId: 'PROG1',
-      foto: null
+      foto: null,
     };
-    
+
     const newPayment: Payment = {
       id: this.nextId++,
       fecha: paymentData.fecha,
@@ -111,11 +109,11 @@ export class MockPaymentRepository implements PaymentRepository {
       type: paymentData.type,
       status: paymentData.status,
       file: paymentData.file,
-      estudiante
+      estudiante,
     };
-    
+
     this.payments.push(newPayment);
-    return Promise.resolve({...newPayment});
+    return Promise.resolve({ ...newPayment });
   }
 
   /**
@@ -123,17 +121,17 @@ export class MockPaymentRepository implements PaymentRepository {
    */
   async updateStatus(pagoId: number, statusData: UpdatePaymentStatusDto): Promise<Payment> {
     const index = this.payments.findIndex(p => p.id === pagoId);
-    
+
     if (index === -1) {
       throw new Error(`Pago con ID ${pagoId} no encontrado`);
     }
-    
+
     const updatedPayment = {
       ...this.payments[index],
-      status: statusData.status
+      status: statusData.status,
     };
-    
+
     this.payments[index] = updatedPayment;
-    return Promise.resolve({...updatedPayment});
+    return Promise.resolve({ ...updatedPayment });
   }
-} 
+}

@@ -95,4 +95,4 @@ export class StudentUseCase {
     }
     return this.repository.delete(codigo);
   }
-} 
+}

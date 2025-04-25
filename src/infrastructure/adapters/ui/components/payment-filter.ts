@@ -65,30 +65,32 @@ export class PaymentFilter extends BaseComponent {
    */
   applyFilters() {
     const filters: PaymentFilters = {};
-    
+
     if (this.estudiante_codigo.trim()) {
       filters.estudiante_codigo = this.estudiante_codigo.trim();
     }
-    
+
     if (this.fechaInicio) {
       filters.fechaInicio = this.fechaInicio;
     }
-    
+
     if (this.fechaFin) {
       filters.fechaFin = this.fechaFin;
     }
-    
+
     if (this.status) {
       filters.status = this.status;
     }
-    
+
     if (this.type) {
       filters.type = this.type;
     }
-    
-    this.dispatchEvent(new CustomEvent('filter', {
-      detail: filters
-    }));
+
+    this.dispatchEvent(
+      new CustomEvent('filter', {
+        detail: filters,
+      })
+    );
   }
 
   /**
@@ -100,10 +102,12 @@ export class PaymentFilter extends BaseComponent {
     this.fechaFin = '';
     this.status = '';
     this.type = '';
-    
-    this.dispatchEvent(new CustomEvent('filter', {
-      detail: {}
-    }));
+
+    this.dispatchEvent(
+      new CustomEvent('filter', {
+        detail: {},
+      })
+    );
   }
 
   override render() {
@@ -123,7 +127,7 @@ export class PaymentFilter extends BaseComponent {
               <label for="estudiante_codigo">Código del estudiante</label>
             </div>
           </div>
-          
+
           <div class="col-md-6">
             <div class="form-floating mb-3">
               <select
@@ -143,7 +147,7 @@ export class PaymentFilter extends BaseComponent {
             </div>
           </div>
         </div>
-        
+
         <div class="row g-3 mb-3">
           <div class="col-md-4">
             <div class="form-floating mb-3">
@@ -163,7 +167,7 @@ export class PaymentFilter extends BaseComponent {
               <label for="type">Tipo de pago</label>
             </div>
           </div>
-          
+
           <div class="col-md-4">
             <div class="form-floating mb-3">
               <input
@@ -176,7 +180,7 @@ export class PaymentFilter extends BaseComponent {
               <label for="fechaInicio">Fecha desde</label>
             </div>
           </div>
-          
+
           <div class="col-md-4">
             <div class="form-floating mb-3">
               <input
@@ -190,18 +194,12 @@ export class PaymentFilter extends BaseComponent {
             </div>
           </div>
         </div>
-        
+
         <div class="d-flex justify-content-end gap-2">
-          <button
-            class="btn btn-outline-secondary shadow-sm"
-            @click=${this.clearFilters}
-          >
+          <button class="btn btn-outline-secondary shadow-sm" @click=${this.clearFilters}>
             <i class="fas fa-eraser me-1"></i> Limpiar
           </button>
-          <button
-            class="btn btn-primary shadow-sm"
-            @click=${this.applyFilters}
-          >
+          <button class="btn btn-primary shadow-sm" @click=${this.applyFilters}>
             <i class="fas fa-filter me-1"></i> Aplicar Filtros
           </button>
         </div>
@@ -214,4 +212,4 @@ export class PaymentFilter extends BaseComponent {
       display: block;
     }
   `;
-} 
+}

@@ -34,18 +34,20 @@ export class StudentFilter extends BaseComponent {
    */
   applyFilters() {
     const filters: StudentFilters = {};
-    
+
     if (this.codigo.trim()) {
       filters.codigo = this.codigo.trim();
     }
-    
+
     if (this.programaId) {
       filters.programaId = this.programaId;
     }
-    
-    this.dispatchEvent(new CustomEvent('filter', {
-      detail: filters
-    }));
+
+    this.dispatchEvent(
+      new CustomEvent('filter', {
+        detail: filters,
+      })
+    );
   }
 
   /**
@@ -54,10 +56,12 @@ export class StudentFilter extends BaseComponent {
   clearFilters() {
     this.codigo = '';
     this.programaId = '';
-    
-    this.dispatchEvent(new CustomEvent('filter', {
-      detail: {}
-    }));
+
+    this.dispatchEvent(
+      new CustomEvent('filter', {
+        detail: {},
+      })
+    );
   }
 
   override render() {
@@ -77,7 +81,7 @@ export class StudentFilter extends BaseComponent {
               <label for="codigo">Código del estudiante</label>
             </div>
           </div>
-          
+
           <div class="col-md-6">
             <div class="form-floating mb-3">
               <select
@@ -96,18 +100,12 @@ export class StudentFilter extends BaseComponent {
             </div>
           </div>
         </div>
-        
+
         <div class="d-flex justify-content-end gap-2">
-          <button
-            class="btn btn-outline-secondary shadow-sm"
-            @click=${this.clearFilters}
-          >
+          <button class="btn btn-outline-secondary shadow-sm" @click=${this.clearFilters}>
             <i class="fas fa-eraser me-1"></i> Limpiar
           </button>
-          <button
-            class="btn btn-primary shadow-sm"
-            @click=${this.applyFilters}
-          >
+          <button class="btn btn-primary shadow-sm" @click=${this.applyFilters}>
             <i class="fas fa-filter me-1"></i> Aplicar Filtros
           </button>
         </div>
@@ -120,22 +118,27 @@ export class StudentFilter extends BaseComponent {
     :host {
       display: block;
     }
-    
+
     /* Garantizar que los estilos de Bootstrap se apliquen */
-    .form-control, .form-select, .btn {
+    .form-control,
+    .form-select,
+    .btn {
       font-family: inherit;
       font-size: 1rem;
       line-height: 1.5;
-      transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+      transition:
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
     }
-    
-    .form-control, .form-select {
+
+    .form-control,
+    .form-select {
       display: block;
       width: 100%;
-      padding: .375rem .75rem;
-      border-radius: .25rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.25rem;
     }
-    
+
     .btn {
       display: inline-block;
       font-weight: 400;
@@ -143,11 +146,15 @@ export class StudentFilter extends BaseComponent {
       vertical-align: middle;
       user-select: none;
       border: 1px solid transparent;
-      padding: .375rem .75rem;
+      padding: 0.375rem 0.75rem;
       font-size: 1rem;
       line-height: 1.5;
-      border-radius: .25rem;
-      transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+      border-radius: 0.25rem;
+      transition:
+        color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
     }
   `;
-} 
+}

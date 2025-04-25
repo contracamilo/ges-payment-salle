@@ -23,7 +23,7 @@ export enum StudentStatus {
   ACTIVO = 'ACTIVO',
   INACTIVO = 'INACTIVO',
   GRADUADO = 'GRADUADO',
-  SUSPENDIDO = 'SUSPENDIDO'
+  SUSPENDIDO = 'SUSPENDIDO',
 }
 
 /**
@@ -34,4 +34,4 @@ export type CreateStudentDto = Omit<Student, 'id'>;
 /**
  * Modelo para la actualización de un estudiante existente
  */
-export type UpdateStudentDto = Partial<CreateStudentDto>; 
+export type UpdateStudentDto = Partial<CreateStudentDto>;

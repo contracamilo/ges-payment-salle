@@ -23,7 +23,7 @@ const routes = [
   { path: '/estudiantes', component: 'students-page' },
   { path: '/pagos', component: 'payments-page' },
   { path: '/estudiantes/:codigo/pagos', component: 'student-payments-page' },
-  { path: '(.*)', component: 'not-found-page' }
+  { path: '(.*)', component: 'not-found-page' },
 ];
 
 /**
@@ -43,12 +43,12 @@ export class AppRouter extends BaseComponent {
 
   override firstUpdated() {
     console.log('AppRouter firstUpdated');
-    
+
     // Buscamos el outlet después del primer render
     setTimeout(() => {
       const outlet = this.querySelector('#outlet');
       console.log('Outlet element:', outlet);
-      
+
       if (outlet) {
         console.log('Router outlet encontrado, inicializando router');
         this.router = new Router(outlet);
@@ -61,8 +61,6 @@ export class AppRouter extends BaseComponent {
 
   override render() {
     console.log('AppRouter rendering');
-    return html`
-      <div id="outlet" style="width: 100%; min-height: 100%;"></div>
-    `;
+    return html` <div id="outlet" style="width: 100%; min-height: 100%;"></div> `;
   }
 }

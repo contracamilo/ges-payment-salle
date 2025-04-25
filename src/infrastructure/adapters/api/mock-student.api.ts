@@ -31,19 +31,17 @@ export class MockStudentRepository implements StudentRepository {
    */
   async getByFilters(filters: StudentFilters): Promise<Student[]> {
     let filteredStudents = [...this.students];
-    
+
     if (filters.codigo) {
-      filteredStudents = filteredStudents.filter(s => 
+      filteredStudents = filteredStudents.filter(s =>
         s.codigo.toLowerCase().includes(filters.codigo!.toLowerCase())
       );
     }
-    
+
     if (filters.programaId) {
-      filteredStudents = filteredStudents.filter(s => 
-        s.programaId === filters.programaId
-      );
+      filteredStudents = filteredStudents.filter(s => s.programaId === filters.programaId);
     }
-    
+
     return Promise.resolve(filteredStudents);
   }
 
@@ -68,11 +66,11 @@ export class MockStudentRepository implements StudentRepository {
   async create(studentData: CreateStudentDto): Promise<Student> {
     const newStudent: Student = {
       id: String(this.nextId++),
-      ...studentData
+      ...studentData,
     };
-    
+
     this.students.push(newStudent);
-    return Promise.resolve({...newStudent});
+    return Promise.resolve({ ...newStudent });
   }
 
   /**
@@ -80,19 +78,19 @@ export class MockStudentRepository implements StudentRepository {
    */
   async update(codigo: string, studentData: UpdateStudentDto): Promise<Student> {
     const index = this.students.findIndex(s => s.codigo === codigo);
-    
+
     if (index === -1) {
       throw new Error(`Estudiante con código ${codigo} no encontrado`);
     }
-    
+
     const updatedStudent = {
       ...this.students[index],
       ...studentData,
-      codigo // Mantenemos el código original
+      codigo, // Mantenemos el código original
     };
-    
+
     this.students[index] = updatedStudent;
-    return Promise.resolve({...updatedStudent});
+    return Promise.resolve({ ...updatedStudent });
   }
 
   /**
@@ -100,11 +98,11 @@ export class MockStudentRepository implements StudentRepository {
    */
   async delete(codigo: string): Promise<void> {
     const index = this.students.findIndex(s => s.codigo === codigo);
-    
+
     if (index !== -1) {
       this.students.splice(index, 1);
     }
-    
+
     return Promise.resolve();
   }
-} 
+}

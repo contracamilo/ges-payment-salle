@@ -70,7 +70,7 @@ export class StudentApiRepository implements StudentRepository {
     try {
       const result = await fetchApi<Student>('/estudiantes', {
         method: 'POST',
-        body: JSON.stringify(student)
+        body: JSON.stringify(student),
       });
       console.log('StudentApiRepository: Estudiante creado con éxito', result);
       return result;
@@ -86,7 +86,7 @@ export class StudentApiRepository implements StudentRepository {
   async update(codigo: string, studentData: UpdateStudentDto): Promise<Student> {
     return fetchApi<Student>(`/estudiantes/${codigo}`, {
       method: 'PUT',
-      body: JSON.stringify(studentData)
+      body: JSON.stringify(studentData),
     });
   }
 
@@ -95,7 +95,7 @@ export class StudentApiRepository implements StudentRepository {
    */
   async delete(codigo: string): Promise<void> {
     await fetchApi<void>(`/estudiantes/${codigo}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   }
-} 
+}
